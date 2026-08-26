@@ -265,7 +265,7 @@ async def upload_slips(
                 final_amount = raw_amount
                 deduction_note = ""
 
-            is_udhaar = slip_type == "Udhaar" or bool(safe_customer_name.strip())
+            is_udhaar = "udhaar" in str(final_slip_type).lower() or bool(safe_customer_name.strip())
 
             if is_udhaar:
                 final_merchant = safe_customer_name.strip() or extracted.get("merchant") or "Customer Credit"
@@ -286,7 +286,7 @@ async def upload_slips(
             full_notes = f"{deduction_note} {base_notes}".strip()
 
             tx_id = db.add_transaction(
-                date=target_date,
+                date=str(final_target_date),
                 merchant=final_merchant,
                 category=final_category,
                 total_amount=final_amount,
@@ -311,31 +311,41 @@ async def upload_slips(
                 "status": "Success"
             })
         except Exception as e:
+            fallback_merchant = safe_customer_name if safe_customer_name else "Bank Slip (Manual Review)"
+            fallback_type = "Udhaar" if ("udhaar" in str(final_slip_type).lower() or safe_customer_name) else "Credit"
+            fallback_cat = "Customer Credit" if fallback_type == "Udhaar" else "Bank Receipt"
+            fallback_pay = "Credit / Udhaar" if fallback_type == "Udhaar" else "Bank"
+            fallback_amt = parsed_udhaar_amount if parsed_udhaar_amount > 0 else 0.0
+
             tx_id = db.add_transaction(
-                date=target_date,
-                merchant="Bank Slip (Manual Review)",
-                category="Bank Receipt",
-                total_amount=0.0,
+                date=str(final_target_date),
+                merchant=fallback_merchant,
+                category=fallback_cat,
+                total_amount=fallback_amt,
                 currency=curr,
                 tax_amount=0.0,
                 items=[],
-                payment_method="Bank",
+                payment_method=fallback_pay,
                 image_path=dest_path,
-                notes=f"AI Scan Error: {str(e)}",
-                tx_type="Credit"
+                notes=f"Uploaded Slip ({str(e)})",
+                tx_type=fallback_type
             )
             saved_items.append({
                 "transaction_id": tx_id,
                 "filename": os.path.basename(dest_path),
-                "merchant": "Bank Slip (Manual Review)",
-                "amount": 0.0,
-                "status": "Warning",
+                "merchant": fallback_merchant,
+                "category": fallback_cat,
+                "tx_type": fallback_type,
+                "gross_amount": fallback_amt,
+                "extras_deducted": 0.0,
+                "amount": fallback_amt,
+                "status": "Manual Review Needed",
                 "error": str(e)
             })
 
     return {
         "success": True,
-        "date": target_date,
+        "date": str(final_target_date),
         "processed_count": len(saved_items),
         "items": saved_items
     }

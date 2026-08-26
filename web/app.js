@@ -740,19 +740,24 @@ async function handleFileSelect(files) {
         });
 
         if (!res.ok) {
-            let errorText = "Failed to process slip";
+            let errorText = `Server error (${res.status})`;
             try {
-                const err = await res.json();
-                if (Array.isArray(err.detail)) {
-                    errorText = err.detail.map(d => d.msg || JSON.stringify(d)).join(", ");
-                } else if (typeof err.detail === "string") {
-                    errorText = err.detail;
-                } else if (err.message) {
-                    errorText = err.message;
+                const text = await res.text();
+                try {
+                    const err = JSON.parse(text);
+                    if (Array.isArray(err.detail)) {
+                        errorText = err.detail.map(d => d.msg || JSON.stringify(d)).join(", ");
+                    } else if (typeof err.detail === "string") {
+                        errorText = err.detail;
+                    } else if (err.message) {
+                        errorText = err.message;
+                    } else {
+                        errorText = text || errorText;
+                    }
+                } catch (_) {
+                    errorText = text || errorText;
                 }
-            } catch (_) {
-                errorText = (await res.text()) || errorText;
-            }
+            } catch (_) {}
             throw new Error(errorText);
         }
 
