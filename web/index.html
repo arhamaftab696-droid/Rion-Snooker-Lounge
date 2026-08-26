@@ -1,0 +1,1265 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>🎱 Rion Snooker Lounge - Club Management & Closing Ledger</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: "#ecfdf5", 400: "#34d399", 500: "#10b981", 600: "#059669", 700: "#047857" },
+            snooker: { 50: "#f0fdf4", 500: "#10b981", 800: "#064e3b", 900: "#022c22" },
+            darkbg: "#090d16",
+            darkcard: "#0f172a",
+            darkborder: "#1e293b"
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-emerald-500 selection:text-white pb-16">
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      
+      <!-- Brand Logo: Rion Snooker Lounge -->
+      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('daily')">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 border border-emerald-400/40 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white text-2xl font-black">
+          🎱
+        </div>
+        <div>
+          <div class="font-extrabold text-lg leading-tight tracking-tight flex items-center gap-2 text-white">
+            RION <span class="text-emerald-400 font-black">SNOOKER LOUNGE</span>
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">CLUB POS</span>
+          </div>
+          <p class="text-xs text-slate-400">Snooker Club Management & Daily Closing Ledger</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs (Desktop) -->
+      <nav class="hidden md:flex items-center space-x-1 bg-slate-800/80 p-1 rounded-xl border border-slate-700/60">
+        <button id="nav-daily" onclick="switchTab('daily')" class="nav-btn px-3 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 bg-brand-600 text-white shadow">
+          <i data-lucide="calendar" class="w-4 h-4"></i> 📅 Daily
+        </button>
+        <button id="nav-monthly" onclick="switchTab('monthly')" class="nav-btn px-3 py-2 text-xs font-bold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all flex items-center gap-1.5">
+          <i data-lucide="calendar-range" class="w-4 h-4"></i> 🗓️ Monthly
+        </button>
+        <button id="nav-khata" onclick="switchTab('khata')" class="nav-btn px-3 py-2 text-xs font-bold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all flex items-center gap-1.5">
+          <i data-lucide="users" class="w-4 h-4"></i> 👥 Khata
+        </button>
+        <button id="nav-staff" onclick="switchTab('staff')" class="nav-btn px-3 py-2 text-xs font-bold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all flex items-center gap-1.5">
+          <i data-lucide="user-check" class="w-4 h-4"></i> 👨‍💼 Staff & Salaries
+        </button>
+        <button id="nav-history" onclick="switchTab('history')" class="nav-btn px-3 py-2 text-xs font-bold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all flex items-center gap-1.5">
+          <i data-lucide="bar-chart-3" class="w-4 h-4"></i> 📊 History
+        </button>
+        <button id="nav-chat" onclick="switchTab('chat')" class="nav-btn px-3 py-2 text-xs font-bold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all flex items-center gap-1.5">
+          <i data-lucide="bot" class="w-4 h-4"></i> 💬 AI Assistant
+        </button>
+        <button id="nav-settings" onclick="switchTab('settings')" class="nav-btn px-3 py-2 text-xs font-bold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all flex items-center gap-1.5">
+          <i data-lucide="settings" class="w-4 h-4"></i> ⚙️ Settings
+        </button>
+      </nav>
+
+      <!-- Quick Export & Status -->
+      <div class="flex items-center space-x-3">
+        <button onclick="downloadRionCSV()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white text-xs font-semibold px-3.5 py-2 rounded-lg shadow-md flex items-center gap-1.5 border border-emerald-400/30">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Export</span> CSV
+        </button>
+        <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="System Online"></div>
+      </div>
+    </div>
+
+    <!-- Mobile Navigation Bar -->
+    <div class="md:hidden flex border-t border-slate-800 bg-slate-900 px-2 py-1.5 justify-around text-xs">
+      <button onclick="switchTab('daily')" class="flex flex-col items-center py-1 px-1.5 text-brand-400 font-semibold" id="mob-daily">
+        <i data-lucide="calendar" class="w-4 h-4 mb-0.5"></i>
+        <span>Daily</span>
+      </button>
+      <button onclick="switchTab('monthly')" class="flex flex-col items-center py-1 px-1.5 text-slate-400" id="mob-monthly">
+        <i data-lucide="calendar-range" class="w-4 h-4 mb-0.5"></i>
+        <span>Monthly</span>
+      </button>
+      <button onclick="switchTab('khata')" class="flex flex-col items-center py-1 px-1.5 text-slate-400" id="mob-khata">
+        <i data-lucide="users" class="w-4 h-4 mb-0.5"></i>
+        <span>Khata</span>
+      </button>
+      <button onclick="switchTab('staff')" class="flex flex-col items-center py-1 px-1.5 text-slate-400" id="mob-staff">
+        <i data-lucide="user-check" class="w-4 h-4 mb-0.5"></i>
+        <span>Staff</span>
+      </button>
+      <button onclick="switchTab('history')" class="flex flex-col items-center py-1 px-1.5 text-slate-400" id="mob-history">
+        <i data-lucide="bar-chart-3" class="w-4 h-4 mb-0.5"></i>
+        <span>History</span>
+      </button>
+      <button onclick="switchTab('chat')" class="flex flex-col items-center py-1 px-1.5 text-slate-400" id="mob-chat">
+        <i data-lucide="bot" class="w-4 h-4 mb-0.5"></i>
+        <span>AI</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main App Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+
+    <!-- ========================================================================= -->
+    <!-- TAB 1: DAILY CLOSING & ENTRIES -->
+    <!-- ========================================================================= -->
+    <section id="tab-daily" class="space-y-6">
+      
+      <!-- Date Navigator Banner -->
+      <div class="bg-slate-900/90 border border-slate-800 p-4 sm:p-5 rounded-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center space-x-3">
+          <div class="p-2.5 bg-brand-500/10 text-brand-400 rounded-xl border border-brand-500/20">
+            <i data-lucide="calendar-check" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-white tracking-tight">Daily Closing & Settlements</h2>
+            <p class="text-xs text-slate-400">Manage day cash, bank receipts, member credit, and expenses</p>
+          </div>
+        </div>
+
+        <!-- Date Selector & Quick Jump -->
+        <div class="flex items-center space-x-2 w-full sm:w-auto justify-between sm:justify-end">
+          <button onclick="navigateDay(-1)" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-slate-300 hover:text-white transition">
+            <i data-lucide="chevron-left" class="w-4 h-4"></i>
+          </button>
+          
+          <input type="date" id="activeDateInput" onchange="onDateChanged(this.value)" class="bg-slate-800 border border-slate-700 text-white font-bold text-xs sm:text-sm rounded-xl px-3.5 py-2 focus:outline-none focus:border-brand-500 transition">
+          
+          <button onclick="navigateDay(1)" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-xl border border-slate-700 text-slate-300 hover:text-white transition">
+            <i data-lucide="chevron-right" class="w-4 h-4"></i>
+          </button>
+
+          <button onclick="goToToday()" class="bg-brand-600/20 text-brand-400 border border-brand-500/30 hover:bg-brand-600/30 text-xs font-semibold px-3 py-2 rounded-xl transition">
+            Today
+          </button>
+        </div>
+      </div>
+
+      <!-- 6 Live Financial Settlement KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
+        
+        <!-- CASH CARD -->
+        <div class="bg-slate-900/90 border border-emerald-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md relative overflow-hidden group hover:border-emerald-500/40 transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-400">💵 CASH IN</span>
+            <i data-lucide="banknote" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-emerald-300 tracking-tight" id="card-cash">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1" id="card-cash-count">0 cash sales</p>
+        </div>
+
+        <!-- BANK RECEIPTS CARD -->
+        <div class="bg-slate-900/90 border border-sky-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md relative overflow-hidden group hover:border-sky-500/40 transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-sky-400">🏦 BANK IN</span>
+            <i data-lucide="credit-card" class="w-4 h-4 text-sky-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-sky-300 tracking-tight" id="card-bank">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1" id="card-bank-count">0 bank slips</p>
+        </div>
+
+        <!-- UDHAAR GIVEN CARD -->
+        <div class="bg-slate-900/90 border border-indigo-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md relative overflow-hidden group hover:border-indigo-500/40 transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-indigo-400">🔵 UDHAAR GIVEN</span>
+            <i data-lucide="user-minus" class="w-4 h-4 text-indigo-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-indigo-300 tracking-tight" id="card-udhaar">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1" id="card-udhaar-count">0 given</p>
+        </div>
+
+        <!-- UDHAAR RETURNED (WAPSI) CARD -->
+        <div class="bg-slate-900/90 border border-purple-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md relative overflow-hidden group hover:border-purple-500/40 transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-purple-400">🟣 UDHAAR RET.</span>
+            <i data-lucide="user-check" class="w-4 h-4 text-purple-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-purple-300 tracking-tight" id="card-udhaar-returned">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1" id="card-udhaar-returned-count">0 collected</p>
+        </div>
+
+        <!-- EXPENSE CASH CARD -->
+        <div class="bg-slate-900/90 border border-rose-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md relative overflow-hidden group hover:border-rose-500/40 transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-rose-400">🔴 EXPENSES</span>
+            <i data-lucide="trending-down" class="w-4 h-4 text-rose-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-rose-300 tracking-tight" id="card-expense">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1" id="card-expense-count">0 expenses</p>
+        </div>
+
+        <!-- NET DAILY SETTLEMENT BALANCE CARD -->
+        <div class="bg-gradient-to-br from-brand-900/50 via-slate-900 to-slate-900 border border-brand-500/30 p-3.5 sm:p-4 rounded-2xl shadow-md relative overflow-hidden group hover:border-brand-500/50 transition">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-brand-400">💎 NET CLOSING</span>
+            <i data-lucide="sparkles" class="w-4 h-4 text-brand-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-brand-300 tracking-tight" id="card-net">PKR 0.00</div>
+          <p class="text-[10px] text-brand-400/80 mt-1" id="card-net-formula">Total In - Expenses</p>
+        </div>
+
+      </div>
+
+      <!-- Action Grid: Left Column Manual Entry | Right Column Slip Uploader -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT: Quick Manual Entry Form (4-Way Toggle) -->
+        <div class="lg:col-span-5 bg-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center space-x-2.5 mb-4">
+              <div class="p-2 bg-slate-800 rounded-lg text-brand-400">
+                <i data-lucide="edit-3" class="w-4 h-4"></i>
+              </div>
+              <h3 class="font-bold text-sm text-white">Manual Counter Entry</h3>
+            </div>
+
+            <form id="manualEntryForm" onsubmit="submitManualEntry(event)" class="space-y-3.5">
+              
+              <!-- 4-Way Segmented Toggle -->
+              <div class="grid grid-cols-2 sm:grid-cols-4 p-1 bg-slate-800 rounded-xl border border-slate-700/60 gap-1">
+                <button type="button" onclick="setEntryType('Expense')" id="btn-type-expense" class="py-2 text-xs font-bold rounded-lg transition bg-rose-600 text-white shadow">
+                  🔴 Expense
+                </button>
+                <button type="button" onclick="setEntryType('Credit')" id="btn-type-credit" class="py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white">
+                  🟢 Cash In
+                </button>
+                <button type="button" onclick="setEntryType('Udhaar')" id="btn-type-udhaar" class="py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white">
+                  🔵 Udhaar Given
+                </button>
+                <button type="button" onclick="setEntryType('UdhaarReturned')" id="btn-type-udhaar-ret" class="py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white">
+                  🟣 Udhaar Ret.
+                </button>
+              </div>
+
+              <!-- Amount Input -->
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Amount (PKR) *</label>
+                <div class="relative">
+                  <span class="currency-label absolute left-3 top-2.5 text-xs text-slate-400 font-bold">PKR </span>
+                  <input type="number" step="0.01" id="entryAmount" required placeholder="0.00" class="w-full bg-slate-800 border border-slate-700 text-white text-sm font-bold rounded-xl pl-14 pr-4 py-2.5 focus:outline-none focus:border-brand-500">
+                </div>
+              </div>
+
+              <!-- Description / Client Name -->
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Description / Customer / Staff Name *</label>
+                <input type="text" id="entryDesc" required placeholder="Reason / Description (e.g. Marker Salary, Generator Fuel, Ali Raza)" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl px-3.5 py-2.5 focus:outline-none focus:border-brand-500">
+              </div>
+
+              <!-- Snooker Category -->
+              <div>
+                <label class="block text-[11px] font-semibold text-slate-300 mb-1">Category</label>
+                <select id="entryCategory" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+                  <option value="Table Play">🎱 Table Play / Frame Sales</option>
+                  <option value="Canteen & Food">☕ Canteen, Drinks & Snacks</option>
+                  <option value="Snooker Accessories">🎯 Cue Tips, Chalk & Accessories</option>
+                  <option value="Counter Cash">💵 Counter Cash Collection</option>
+                  <option value="Staff & Marker Salary">👨‍💼 Staff & Marker Daily Salary</option>
+                  <option value="Electricity & Generator">⚡ Electricity & AC Generator Fuel</option>
+                  <option value="Table Maintenance">🛠️ Table Cloth & Maintenance</option>
+                  <option value="Daily Expense">🔴 Daily Shop Expense</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <button type="submit" class="w-full bg-brand-600 hover:bg-brand-500 active:scale-98 transition text-white text-xs font-bold py-2.5 rounded-xl shadow-lg flex items-center justify-center gap-1.5">
+                <i data-lucide="plus-circle" class="w-4 h-4"></i> + Add Entry to Day Closing
+              </button>
+            </form>
+          </div>
+        </div>
+
+        <!-- RIGHT: Instant Receipt / Slips Camera & Drag Drop Upload -->
+        <div class="lg:col-span-7 bg-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center space-x-2.5">
+                <div class="p-2 bg-slate-800 rounded-lg text-sky-400">
+                  <i data-lucide="camera" class="w-4 h-4"></i>
+                </div>
+                <div>
+                  <h3 class="font-bold text-sm text-white">Upload Slips & Camera Photos</h3>
+                  <p class="text-[11px] text-slate-400">AI auto-extracts bank slips, POS counter bills & amounts</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Drag & Drop Zone -->
+            <div id="dropzone" class="border-2 border-dashed border-slate-700/80 hover:border-brand-500/60 bg-slate-800/30 hover:bg-slate-800/60 transition-all rounded-2xl p-6 text-center cursor-pointer relative group">
+              <input type="file" id="slipFileInput" multiple accept="image/*,.pdf" onchange="handleFileSelect(this.files)" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
+              
+              <div class="space-y-3 pointer-events-none">
+                <div class="w-12 h-12 rounded-2xl bg-brand-500/10 text-brand-400 border border-brand-500/20 mx-auto flex items-center justify-center group-hover:scale-110 transition">
+                  <i data-lucide="upload-cloud" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <p class="text-xs font-bold text-white">Drop Rion table receipts, counter bills or bank slips here</p>
+                  <p class="text-[11px] text-slate-400 mt-1">Supports JPG, PNG, Screenshots, PDF</p>
+                </div>
+                <div class="flex items-center justify-center gap-3 pt-2">
+                  <label for="cameraInput" class="pointer-events-auto cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-xs font-semibold px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition">
+                    <i data-lucide="camera" class="w-3.5 h-3.5 text-sky-400"></i> Snap Photo
+                  </label>
+                  <input type="file" id="cameraInput" accept="image/*" capture="environment" onchange="handleFileSelect(this.files)" class="hidden">
+                  <span class="text-xs text-slate-500">or browse files</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Upload Status Banner -->
+            <div id="uploadStatus" class="hidden mt-3 p-3 bg-brand-500/10 border border-brand-500/20 rounded-xl text-xs text-brand-300 flex items-center gap-2">
+              <div class="w-2 h-2 rounded-full bg-brand-400 animate-ping"></div>
+              <span>Processing & extracting slips with AI... Please wait.</span>
+            </div>
+
+            <!-- TWO INDEPENDENT DEDICATED SECTIONS: 1) EXTRAS DEDUCTED & 2) CUSTOMER UDHAAR -->
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+              
+              <!-- SECTION 1: EXTRAS DEDUCTED -->
+              <div class="p-3.5 bg-slate-800/50 border border-rose-500/30 rounded-2xl space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 text-xs font-bold text-rose-300">
+                    <i data-lucide="scissors" class="w-3.5 h-3.5 text-rose-400"></i>
+                    <span>✂️ Extras Deducted</span>
+                  </div>
+                  <span class="text-[9px] text-rose-300 bg-rose-500/20 px-1.5 py-0.5 rounded border border-rose-500/30">Deduction</span>
+                </div>
+                <p class="text-[10px] text-slate-400">Subtract transfer fee, damages, or discounts:</p>
+                <div>
+                  <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">Deduction Amount (PKR)</label>
+                  <input type="number" step="0.01" id="uploadExtrasDeducted" placeholder="0.00" class="w-full bg-slate-900 border border-slate-700 text-rose-400 font-bold text-xs rounded-xl p-2 focus:outline-none focus:border-rose-500">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-semibold text-slate-400 mb-0.5">Deduction Reason</label>
+                  <input type="text" id="uploadExtrasReason" placeholder="e.g. Bank Fee / Cut / Discount" class="w-full bg-slate-900 border border-slate-700 text-white text-xs rounded-xl p-2 focus:outline-none focus:border-brand-500">
+                </div>
+              </div>
+
+              <!-- SECTION 2: CUSTOMER UDHAAR (KHATA) -->
+              <div class="p-3.5 bg-slate-800/50 border border-amber-500/30 rounded-2xl space-y-2">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center gap-1.5 text-xs font-bold text-amber-300">
+                    <i data-lucide="book-open" class="w-3.5 h-3.5 text-amber-400"></i>
+                    <span>📒 Customer Udhaar</span>
+                  </div>
+                  <span class="text-[9px] text-amber-300 bg-amber-500/20 px-1.5 py-0.5 rounded border border-amber-500/30">Khata Bill</span>
+                </div>
+                <p class="text-[10px] text-slate-400">Assign this slip to a customer's Khata:</p>
+                <div>
+                  <label class="block text-[10px] font-semibold text-amber-300 mb-0.5">Select Customer</label>
+                  <select id="uploadCustomerSelectMenu" onchange="onCustomerSelectChanged(this.value)" class="w-full bg-slate-900 border border-amber-500/50 text-amber-300 font-bold text-xs rounded-xl p-2 focus:outline-none focus:border-amber-400 cursor-pointer">
+                    <option value="">-- None (Bank Receipt) --</option>
+                    <option value="__new__">➕ Enter New Customer...</option>
+                  </select>
+                </div>
+                <div id="uploadNewCustomerWrapper" class="hidden">
+                  <label class="block text-[10px] font-bold text-amber-400 mb-0.5">New Customer Name</label>
+                  <input type="text" id="uploadNewCustomerNameInput" placeholder="Customer name..." class="w-full bg-slate-900 border border-amber-500/70 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:border-amber-400">
+                </div>
+                <div>
+                  <label class="block text-[10px] font-semibold text-amber-300 mb-0.5">Udhaar Amount (PKR) <span class="text-slate-400 font-normal">(Optional - leave empty for Slip Total)</span></label>
+                  <input type="number" step="0.01" id="uploadUdhaarAmount" placeholder="0.00" class="w-full bg-slate-900 border border-amber-500/50 text-amber-300 font-bold text-xs rounded-xl p-2 focus:outline-none focus:border-amber-400">
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- DAY BOOK / TRANSACTION LEDGER TABLE -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
+          <div class="flex items-center space-x-2.5">
+            <i data-lucide="book-open" class="w-4 h-4 text-brand-400"></i>
+            <h3 class="font-bold text-sm sm:text-base text-white">Day Book Register</h3>
+          </div>
+          <span class="text-xs text-slate-400" id="daybookSubtitle">0 transactions on this date</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800/60 text-slate-400 uppercase tracking-wider border-b border-slate-800 text-[11px]">
+              <tr>
+                <th class="p-3.5 font-bold">Type</th>
+                <th class="p-3.5 font-bold">Description / Customer / Staff</th>
+                <th class="p-3.5 font-bold">Payment Method</th>
+                <th class="p-3.5 text-right font-bold">Amount</th>
+                <th class="p-3.5 text-center font-bold">Action</th>
+              </tr>
+            </thead>
+            <tbody id="daybookTbody" class="divide-y divide-slate-800/60 text-slate-300">
+              <tr>
+                <td colspan="5" class="p-8 text-center text-slate-500">
+                  <i data-lucide="inbox" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+                  Loading entries...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 2: MONTHLY CLOSING & STATEMENT -->
+    <!-- ========================================================================= -->
+    <section id="tab-monthly" class="space-y-6 hidden">
+      <!-- Month Header Controls -->
+      <div class="bg-slate-900/90 border border-slate-800 p-4 sm:p-5 rounded-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2">
+            <i data-lucide="calendar-range" class="w-5 h-5 text-emerald-400"></i> Monthly Closing Statement
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5" id="monthlySubtitle">Aggregated revenue, expenses, and net profit</p>
+        </div>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <select id="monthlySelectMonth" onchange="loadMonthlyClosing(this.value)" class="bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl px-3.5 py-2 focus:outline-none focus:border-brand-500">
+            <option value="2026-08">August 2026</option>
+          </select>
+          <button onclick="exportSelectedMonthCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow flex items-center gap-1.5 transition">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Download CSV
+          </button>
+        </div>
+      </div>
+
+      <!-- Monthly Summary Metric Cards (6 Cards) -->
+      <div class="grid grid-cols-2 lg:grid-cols-6 gap-3">
+        <div class="bg-slate-900/90 border border-emerald-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-emerald-400">💵 CASH IN</span>
+            <i data-lucide="banknote" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-emerald-300 tracking-tight" id="monthly-cash-in">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">counter sales</p>
+        </div>
+
+        <div class="bg-slate-900/90 border border-sky-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-sky-400">🏦 BANK IN</span>
+            <i data-lucide="credit-card" class="w-4 h-4 text-sky-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-sky-300 tracking-tight" id="monthly-bank-in">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">digital receipts</p>
+        </div>
+
+        <div class="bg-slate-900/90 border border-purple-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-purple-400">🟣 UDHAAR RET.</span>
+            <i data-lucide="user-check" class="w-4 h-4 text-purple-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-purple-300 tracking-tight" id="monthly-udhaar-ret">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">debts recovered</p>
+        </div>
+
+        <div class="bg-slate-900/90 border border-amber-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-amber-400">💰 GROSS IN</span>
+            <i data-lucide="wallet" class="w-4 h-4 text-amber-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-amber-300 tracking-tight" id="monthly-gross-rev">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">total collected</p>
+        </div>
+
+        <div class="bg-slate-900/90 border border-rose-500/20 p-3.5 sm:p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-rose-400">🔴 EXPENSES</span>
+            <i data-lucide="trending-down" class="w-4 h-4 text-rose-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-rose-300 tracking-tight" id="monthly-expenses">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">month total out</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-brand-900/50 via-slate-900 to-slate-900 border border-brand-500/30 p-3.5 sm:p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-brand-400">💎 NET PROFIT</span>
+            <i data-lucide="sparkles" class="w-4 h-4 text-brand-400"></i>
+          </div>
+          <div class="text-lg sm:text-xl font-extrabold text-brand-300 tracking-tight" id="monthly-net-profit">PKR 0.00</div>
+          <p class="text-[10px] text-brand-400/80 mt-1">closing balance</p>
+        </div>
+      </div>
+
+      <!-- Monthly Day-By-Day Register Table -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
+          <h3 class="font-bold text-base text-white flex items-center gap-2">
+            <i data-lucide="list-ordered" class="w-4 h-4 text-brand-400"></i> Daily Register Breakdown
+          </h3>
+          <span class="text-xs text-slate-400" id="monthlyDaysCount">0 days recorded</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800/60 text-slate-400 uppercase tracking-wider border-b border-slate-800 text-[11px]">
+              <tr>
+                <th class="p-3.5 font-bold">Date</th>
+                <th class="p-3.5 text-right font-bold text-emerald-400">Cash (Sales)</th>
+                <th class="p-3.5 text-right font-bold text-sky-400">Bank (Receipts)</th>
+                <th class="p-3.5 text-right font-bold text-purple-400">Udhaar Ret.</th>
+                <th class="p-3.5 text-right font-bold text-white">Total Day In</th>
+                <th class="p-3.5 text-right font-bold text-rose-400">Expense Cash</th>
+                <th class="p-3.5 text-right font-bold text-brand-300">Net Balance</th>
+                <th class="p-3.5 text-center font-bold">Action</th>
+              </tr>
+            </thead>
+            <tbody id="monthlyRegisterTbody" class="divide-y divide-slate-800/60 text-slate-300">
+              <tr><td colspan="8" class="p-8 text-center text-slate-500">Loading monthly register...</td></tr>
+            </tbody>
+            <tfoot id="monthlyRegisterTfoot" class="bg-slate-800/80 font-bold text-xs border-t-2 border-slate-700">
+            </tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Expense Categories Distribution Grid -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl">
+        <h3 class="font-bold text-sm text-white mb-4 flex items-center gap-2">
+          <i data-lucide="pie-chart" class="w-4 h-4 text-rose-400"></i> Monthly Expense Categories Distribution
+        </h3>
+        <div id="monthlyCategoriesGrid" class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 3: CUSTOMER KHATA / UDHAAR DIRECTORY -->
+    <!-- ========================================================================= -->
+    <section id="tab-khata" class="space-y-6 hidden">
+      <!-- Khata Metric Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div class="bg-slate-900/90 border border-slate-800 p-5 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-slate-400">👥 TOTAL CLIENTS</span>
+            <i data-lucide="users" class="w-5 h-5 text-slate-400"></i>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight" id="khata-total-clients">0</div>
+          <p class="text-[11px] text-slate-400 mt-1">active khata accounts</p>
+        </div>
+
+        <div class="bg-slate-900/90 border border-indigo-500/20 p-5 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">🔵 TOTAL GIVEN</span>
+            <i data-lucide="user-minus" class="w-5 h-5 text-indigo-400"></i>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-indigo-300 tracking-tight" id="khata-total-given">PKR 0.00</div>
+          <p class="text-[11px] text-slate-400 mt-1">all-time credit out</p>
+        </div>
+
+        <div class="bg-slate-900/90 border border-purple-500/20 p-5 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-purple-400">🟣 TOTAL RETURNED</span>
+            <i data-lucide="user-check" class="w-5 h-5 text-purple-400"></i>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-purple-300 tracking-tight" id="khata-total-returned">PKR 0.00</div>
+          <p class="text-[11px] text-slate-400 mt-1">recovered debt in</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-indigo-900/40 via-purple-900/20 to-slate-900 border border-indigo-500/30 p-5 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">💎 NET OUTSTANDING</span>
+            <i data-lucide="hourglass" class="w-5 h-5 text-indigo-400"></i>
+          </div>
+          <div class="text-2xl sm:text-3xl font-extrabold text-indigo-200 tracking-tight" id="khata-total-outstanding">PKR 0.00</div>
+          <p class="text-[11px] text-indigo-300/80 mt-1">market debt to receive</p>
+        </div>
+      </div>
+
+      <!-- Clients Directory Table -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="font-bold text-base text-white flex items-center gap-2">
+              <i data-lucide="book-open" class="w-4 h-4 text-indigo-400"></i> Customer Khata Directory
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5" id="khataSubtitle">Client balances, credit management & customer ledger</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2.5">
+            <div class="relative">
+              <input type="text" id="khataSearchInput" oninput="filterKhataClients()" placeholder="🔍 Search customer..." class="bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 w-full sm:w-48">
+            </div>
+            <button onclick="openAddCustomerModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow flex items-center gap-1.5 transition">
+              <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> + Add Customer
+            </button>
+            <button onclick="openAddUdhaarDirectModal()" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-3.5 py-1.5 rounded-xl shadow flex items-center gap-1.5 transition">
+              <i data-lucide="plus-circle" class="w-3.5 h-3.5"></i> + Add Udhaar
+            </button>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800/60 text-slate-400 uppercase tracking-wider border-b border-slate-800 text-[11px]">
+              <tr>
+                <th class="p-3.5 font-bold">Client / Customer Name</th>
+                <th class="p-3.5 font-bold">Contact / Phone</th>
+                <th class="p-3.5 text-right font-bold">Total Given</th>
+                <th class="p-3.5 text-right font-bold">Total Returned</th>
+                <th class="p-3.5 text-right font-bold">Net Pending Due</th>
+                <th class="p-3.5 text-center font-bold">Status</th>
+                <th class="p-3.5 text-center font-bold">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="khataTbody" class="divide-y divide-slate-800/60 text-slate-300">
+              <tr><td colspan="7" class="p-8 text-center text-slate-500">Loading Khata directory...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 4: STAFF & SALARIES MANAGEMENT -->
+    <!-- ========================================================================= -->
+    <section id="tab-staff" class="space-y-6 hidden">
+      <!-- Staff Header -->
+      <div class="bg-slate-900/90 border border-slate-800 p-4 sm:p-5 rounded-2xl shadow-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-white tracking-tight flex items-center gap-2">
+            <i data-lucide="user-check" class="w-5 h-5 text-emerald-400"></i> Staff & Salary Management
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5" id="staffSubtitle">Markers, cashiers, canteen staff wages and salary advances</p>
+        </div>
+        <div class="flex items-center gap-3 w-full sm:w-auto">
+          <button onclick="openAddStaffModal()" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow flex items-center gap-1.5 transition">
+            <i data-lucide="user-plus" class="w-4 h-4"></i> + Add Staff Member
+          </button>
+        </div>
+      </div>
+
+      <!-- Salary Policy & Schedule Notice Banner -->
+      <div class="bg-gradient-to-r from-emerald-950/60 via-slate-900 to-indigo-950/60 border border-emerald-500/30 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs shadow-lg">
+        <div class="flex items-center gap-3">
+          <div class="p-2.5 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-xl font-black text-sm">
+            📅 10th
+          </div>
+          <div>
+            <div class="font-bold text-white text-sm">Salary Pay Day: 10th of Every Month</div>
+            <div class="text-slate-400 text-xs">🔒 <strong>Security is not taken in advance</strong> — it is automatically accumulated & retained from the staff member's <strong>first 10 days of work</strong>.</div>
+          </div>
+        </div>
+        <div class="bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 font-bold px-3.5 py-1.5 rounded-xl text-xs flex items-center gap-1.5">
+          <i data-lucide="shield-check" class="w-4 h-4"></i> 10 Days Work Security
+        </div>
+      </div>
+
+      <!-- Staff 6 KPI Cards -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+        <div class="bg-slate-900/90 border border-slate-800 p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400">👨‍💼 ACTIVE STAFF</span>
+            <i data-lucide="users" class="w-4 h-4 text-slate-400"></i>
+          </div>
+          <div class="text-xl font-extrabold text-white tracking-tight" id="staff-total-count">0</div>
+          <p class="text-[10px] text-slate-400 mt-1">markers & staff</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-emerald-950/50 via-slate-900 to-slate-900 border border-emerald-500/30 p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-emerald-400">⚡ EARNED TILL TODAY</span>
+            <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+          </div>
+          <div class="text-xl font-extrabold text-emerald-300 tracking-tight" id="staff-total-earned-today">PKR 0.00</div>
+          <p class="text-[10px] text-emerald-400/70 mt-1" id="staffEarnedDaysSub">fresh days worked</p>
+        </div>
+
+        <div class="bg-slate-900/90 border border-sky-500/20 p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-sky-400">💰 FULL MONTH DUE</span>
+            <i data-lucide="wallet" class="w-4 h-4 text-sky-400"></i>
+          </div>
+          <div class="text-xl font-extrabold text-sky-300 tracking-tight" id="staff-total-payroll">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">payable on 10th</p>
+        </div>
+
+        <div class="bg-slate-900/90 border border-indigo-500/20 p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-indigo-400">🔒 SECURITY HELD</span>
+            <i data-lucide="lock" class="w-4 h-4 text-indigo-400"></i>
+          </div>
+          <div class="text-xl font-extrabold text-indigo-300 tracking-tight" id="staff-total-security">PKR 0.00</div>
+          <p class="text-[10px] text-indigo-300/80 mt-1">10-day reserve</p>
+        </div>
+
+        <div class="bg-slate-900/90 border border-purple-500/20 p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-purple-400">💸 PAID (MONTH)</span>
+            <i data-lucide="check-circle" class="w-4 h-4 text-purple-400"></i>
+          </div>
+          <div class="text-xl font-extrabold text-purple-300 tracking-tight" id="staff-total-paid">PKR 0.00</div>
+          <p class="text-[10px] text-slate-400 mt-1">wages paid</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-rose-900/40 via-slate-900 to-slate-900 border border-rose-500/30 p-4 rounded-2xl shadow-md">
+          <div class="flex items-center justify-between text-slate-400 mb-2">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-rose-400">⏳ REMAINING DUE</span>
+            <i data-lucide="hourglass" class="w-4 h-4 text-rose-400"></i>
+          </div>
+          <div class="text-xl font-extrabold text-rose-300 tracking-tight" id="staff-total-remaining">PKR 0.00</div>
+          <p class="text-[10px] text-rose-300/80 mt-1">balance due</p>
+        </div>
+      </div>
+
+      <!-- Staff Directory Table -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
+          <div>
+            <h3 class="font-bold text-base text-white flex items-center gap-2">
+              <i data-lucide="users" class="w-4 h-4 text-brand-400"></i> Staff Directory & Fresh Salary Register
+            </h3>
+            <p class="text-xs text-slate-400 mt-0.5">Calculates exact days worked till today & full monthly commitment</p>
+          </div>
+          <button onclick="loadStaffSummary()" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-1.5 rounded-lg border border-slate-700 transition">
+            🔄 Refresh
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800/60 text-slate-400 uppercase tracking-wider border-b border-slate-800 text-[11px]">
+              <tr>
+                <th class="p-3.5 font-bold">Staff Member</th>
+                <th class="p-3.5 font-bold">Role / Joined</th>
+                <th class="p-3.5 text-right font-bold text-slate-400">Base Salary</th>
+                <th class="p-3.5 text-right font-bold text-emerald-400">⚡ Earned Till Today</th>
+                <th class="p-3.5 text-right font-bold text-sky-400">📅 Month Due (10th)</th>
+                <th class="p-3.5 text-right font-bold text-indigo-400">🔒 10d Security</th>
+                <th class="p-3.5 text-right font-bold text-purple-400">Paid (This Month)</th>
+                <th class="p-3.5 text-center font-bold">Status</th>
+                <th class="p-3.5 text-center font-bold">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="staffTbody" class="divide-y divide-slate-800/60 text-slate-300">
+              <tr><td colspan="9" class="p-8 text-center text-slate-500">Loading staff directory...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- MODAL 1: ADD NEW STAFF -->
+    <div id="addStaffModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <h4 class="font-bold text-white text-base">➕ Add Staff Member</h4>
+          <button onclick="closeAddStaffModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form onsubmit="submitAddStaff(event)" class="space-y-3.5 pt-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Staff Name *</label>
+            <input type="text" id="addStaffName" required placeholder="e.g. Usman Marker, Hamza Manager" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Role / Designation *</label>
+              <select id="addStaffRole" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+                <option value="Marker">Marker</option>
+                <option value="Manager">Manager / Cashier</option>
+                <option value="Canteen Staff">Cafe / Canteen Boy</option>
+                <option value="Maintenance / Cleaner">Cleaner / Maintenance</option>
+                <option value="Security">Security</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Salary Model</label>
+              <select id="addStaffSalaryType" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+                <option value="Monthly">Monthly Fixed</option>
+                <option value="Daily">Daily Wage</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Salary Amount (PKR) *</label>
+              <input type="number" step="0.01" id="addStaffSalary" required placeholder="25000" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Joining Date <span class="text-slate-400 font-normal">(Optional)</span></label>
+              <input type="date" id="addStaffHireDate" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Phone Number</label>
+              <input type="text" id="addStaffPhone" placeholder="0300-1234567" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Notes (Optional)</label>
+              <input type="text" id="addStaffNotes" placeholder="e.g. Night shift marker" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+            </div>
+          </div>
+          <div class="pt-2 flex justify-end gap-2">
+            <button type="button" onclick="closeAddStaffModal()" class="bg-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl">Cancel</button>
+            <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-5 py-2 rounded-xl shadow">Save Staff</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL 2: PAY SALARY / ADVANCE -->
+    <div id="paySalaryModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-5">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h4 class="font-bold text-white text-base" id="payModalStaffName">💵 Pay Staff Salary / Advance</h4>
+            <p class="text-xs text-slate-400" id="payModalStaffSub">Recorded directly to today's closing expense</p>
+          </div>
+          <button onclick="closePaySalaryModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form onsubmit="submitPaySalary(event)" class="space-y-3.5 pt-4">
+          <input type="hidden" id="payModalStaffId">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Amount to Pay (PKR) *</label>
+            <input type="number" step="0.01" id="payModalAmount" required placeholder="0.00" class="w-full bg-slate-800 border border-slate-700 text-white text-sm font-bold rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Payment Method</label>
+              <select id="payModalMethod" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+                <option value="Cash">Cash (Counter)</option>
+                <option value="Bank">Bank Transfer</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Date</label>
+              <input type="date" id="payModalDate" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Notes / Reason</label>
+            <input type="text" id="payModalNotes" placeholder="e.g. Weekly advance / Monthly salary full pay" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+          </div>
+          <div class="pt-2 flex justify-end gap-2">
+            <button type="button" onclick="closePaySalaryModal()" class="bg-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl">Cancel</button>
+            <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white font-bold text-xs px-5 py-2 rounded-xl shadow">Confirm & Pay</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL 4: RESIGNATION & FINAL SETTLEMENT CALCULATOR -->
+    <div id="resignationModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-lg w-full shadow-2xl p-5 overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <div>
+            <h4 class="font-bold text-white text-base flex items-center gap-2">
+              <i data-lucide="user-x" class="w-5 h-5 text-amber-400"></i> <span id="resignModalStaffName">Staff Resignation & Settlement</span>
+            </h4>
+            <p class="text-xs text-slate-400">Calculate final earned days + 10-day security deposit refund</p>
+          </div>
+          <button onclick="closeResignationModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+
+        <form onsubmit="submitResignation(event)" class="space-y-3.5 pt-4 overflow-y-auto flex-1 pr-1">
+          <input type="hidden" id="resignStaffId">
+
+          <!-- Leaving Date -->
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Leaving / Resignation Date *</label>
+              <input type="date" id="resignLeaveDate" onchange="fetchSettlementCalculation()" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Payment Method</label>
+              <select id="resignPaymentMethod" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-amber-500">
+                <option value="Cash">Cash (Counter)</option>
+                <option value="Bank">Bank Transfer</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Security Hold Return Option -->
+          <div class="bg-slate-800/80 border border-slate-700/80 p-3 rounded-xl space-y-2 text-xs">
+            <div class="flex items-center justify-between">
+              <label class="flex items-center gap-2 text-slate-200 cursor-pointer font-bold">
+                <input type="checkbox" id="resignRefundSecurity" checked onchange="fetchSettlementCalculation()" class="rounded bg-slate-700 text-emerald-500 focus:ring-0">
+                <span>🔒 Refund 10 Days Security Deposit</span>
+              </label>
+              <span id="resignSecHeldLabel" class="text-indigo-400 font-extrabold">+ PKR 0.00</span>
+            </div>
+            <div class="flex items-center justify-between pt-1 border-t border-slate-700/60">
+              <label class="text-[11px] text-slate-400">Deductions (Damages/Loss):</label>
+              <div class="relative w-32">
+                <input type="number" step="0.01" id="resignDeductions" value="0" oninput="fetchSettlementCalculation()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-1.5 text-xs text-right text-rose-400 font-bold focus:outline-none">
+              </div>
+            </div>
+          </div>
+
+          <!-- Calculated Real-Time Settlement Summary Card -->
+          <div class="bg-gradient-to-br from-slate-800 via-slate-800/90 to-slate-900 border border-slate-700 p-4 rounded-xl space-y-2 text-xs">
+            <div class="flex justify-between text-slate-400">
+              <span>Days worked in final month:</span>
+              <span id="calcDaysWorked" class="font-semibold text-slate-200">0 days</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>Earned final month salary:</span>
+              <span id="calcEarnedSalary" class="font-semibold text-emerald-400">PKR 0.00</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>Security deposit refund:</span>
+              <span id="calcSecurityRefund" class="font-semibold text-indigo-400">+ PKR 0.00</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>Deductions / Damages:</span>
+              <span id="calcDeductions" class="font-semibold text-rose-400">- PKR 0.00</span>
+            </div>
+            <div class="flex justify-between text-slate-400 border-t border-slate-700 pt-2 text-sm font-extrabold text-white">
+              <span>Net Final Settlement:</span>
+              <span id="calcNetPayable" class="text-base text-amber-300 font-black">PKR 0.00</span>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Reason / Notes</label>
+            <input type="text" id="resignNotes" placeholder="e.g. Left with clean handover / Full security returned" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-amber-500">
+          </div>
+
+          <div class="pt-2 flex justify-end gap-2">
+            <button type="button" onclick="closeResignationModal()" class="bg-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl">Cancel</button>
+            <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow flex items-center gap-1.5">
+              <i data-lucide="check" class="w-4 h-4"></i> Confirm Resignation & Pay
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL 3: STAFF PAYOUT HISTORY -->
+    <div id="staffHistoryModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+        <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-800/50">
+          <div>
+            <h4 class="font-bold text-white text-base" id="staffHistoryModalTitle">Staff Payout Statement</h4>
+            <p class="text-xs text-slate-400">All salary and advance payments logged</p>
+          </div>
+          <button onclick="closeStaffHistoryModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition">
+            <i data-lucide="x" class="w-5 h-5"></i>
+          </button>
+        </div>
+        <div class="p-4 sm:p-5 overflow-y-auto flex-1">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800 text-slate-400 uppercase text-[10px]">
+              <tr>
+                <th class="p-2.5">Date</th>
+                <th class="p-2.5">Staff Member</th>
+                <th class="p-2.5">Method</th>
+                <th class="p-2.5">Notes</th>
+                <th class="p-2.5 text-right">Amount Paid</th>
+              </tr>
+            </thead>
+            <tbody id="staffHistoryModalTbody" class="divide-y divide-slate-800 text-slate-300">
+            </tbody>
+          </table>
+        </div>
+        <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-between items-center">
+          <div class="text-xs font-bold text-white" id="staffHistoryModalTotal">Total Paid: PKR 0.00</div>
+          <button onclick="closeStaffHistoryModal()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-4 py-2 rounded-xl transition">Close</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: ADD NEW CUSTOMER TO KHATA -->
+    <div id="addCustomerModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-5 overflow-hidden">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <h4 class="font-bold text-white text-base flex items-center gap-2">
+            <i data-lucide="user-plus" class="w-5 h-5 text-indigo-400"></i> Add New Khata Customer
+          </h4>
+          <button onclick="closeAddCustomerModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form onsubmit="submitAddCustomer(event)" class="space-y-3 pt-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Customer / Client Name *</label>
+            <input type="text" id="addCustName" required placeholder="e.g. Bilal, Chaudhry Asif, Shakeel" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Phone Number (Optional)</label>
+            <input type="text" id="addCustPhone" placeholder="0300-1234567" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Initial / Opening Udhaar Balance (PKR)</label>
+            <input type="number" step="0.01" id="addCustBalance" placeholder="0.00" class="w-full bg-slate-800 border border-slate-700 text-amber-300 font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Notes / Description (Optional)</label>
+            <input type="text" id="addCustNotes" placeholder="e.g. Regular VIP player / Cue cabinet #4" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="pt-2 flex justify-end gap-2">
+            <button type="button" onclick="closeAddCustomerModal()" class="bg-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl">Cancel</button>
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow flex items-center gap-1.5">
+              <i data-lucide="check" class="w-4 h-4"></i> Save Customer
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: EDIT CUSTOMER -->
+    <div id="editCustomerModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-5 overflow-hidden">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <h4 class="font-bold text-white text-base flex items-center gap-2">
+            <i data-lucide="edit-3" class="w-5 h-5 text-indigo-400"></i> Edit Khata Customer
+          </h4>
+          <button onclick="closeEditCustomerModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form onsubmit="submitEditCustomer(event)" class="space-y-3 pt-4">
+          <input type="hidden" id="editCustOldName">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Customer Name *</label>
+            <input type="text" id="editCustName" required class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Phone Number</label>
+            <input type="text" id="editCustPhone" placeholder="0300-1234567" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Notes / Profile Details</label>
+            <input type="text" id="editCustNotes" placeholder="e.g. VIP Club Member" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-indigo-500">
+          </div>
+          <div class="pt-2 flex justify-between items-center">
+            <button type="button" onclick="deleteCustomerProfile()" class="text-rose-400 hover:text-rose-300 text-xs font-semibold flex items-center gap-1">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Profile
+            </button>
+            <div class="flex gap-2">
+              <button type="button" onclick="closeEditCustomerModal()" class="bg-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl">Cancel</button>
+              <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow flex items-center gap-1.5">
+                <i data-lucide="check" class="w-4 h-4"></i> Update Customer
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: DIRECT UDHAAR ENTRY (FROM KHATA) -->
+    <div id="addKhataUdhaarModal" class="fixed inset-0 bg-black/75 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+      <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-md w-full shadow-2xl p-5 overflow-hidden">
+        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+          <h4 class="font-bold text-white text-base flex items-center gap-2">
+            <i data-lucide="plus-circle" class="w-5 h-5 text-amber-400"></i> Add Customer Udhaar (Credit)
+          </h4>
+          <button onclick="closeAddKhataUdhaarModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <form onsubmit="submitAddKhataUdhaar(event)" class="space-y-3 pt-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Customer *</label>
+            <input type="text" id="directUdhaarCustName" required list="khataCustomerDatalist" placeholder="Select or type customer name..." class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-amber-500">
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Date *</label>
+              <input type="date" id="directUdhaarDate" required class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-amber-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold text-slate-300 mb-1">Udhaar Amount (PKR) *</label>
+              <input type="number" step="0.01" id="directUdhaarAmount" required placeholder="0.00" class="w-full bg-slate-800 border border-amber-500/60 text-amber-300 font-bold text-xs rounded-xl p-2.5 focus:outline-none focus:border-amber-400">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Description / Notes</label>
+            <input type="text" id="directUdhaarNotes" placeholder="e.g. Table frame bill / Canteen drinks / Cue tip" class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-amber-500">
+          </div>
+          <div class="pt-2 flex justify-end gap-2">
+            <button type="button" onclick="closeAddKhataUdhaarModal()" class="bg-slate-800 text-slate-300 text-xs px-4 py-2 rounded-xl">Cancel</button>
+            <button type="submit" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow flex items-center gap-1.5">
+              <i data-lucide="check" class="w-4 h-4"></i> Save Udhaar Entry
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 5: HISTORICAL CLOSINGS & EXPORTS -->
+    <!-- ========================================================================= -->
+    <section id="tab-history" class="hidden space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
+        <div class="p-4 sm:p-5 border-b border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h3 class="font-bold text-base text-white">Daily Closings History</h3>
+            <p class="text-xs text-slate-400">All finalized day balances, cash sales, slips, and expenses</p>
+          </div>
+          <button onclick="downloadRionCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow flex items-center gap-1.5 transition">
+            <i data-lucide="download" class="w-4 h-4"></i> Download Full CSV Register
+          </button>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800/60 text-slate-400 uppercase tracking-wider border-b border-slate-800 text-[11px]">
+              <tr>
+                <th class="p-3.5 font-bold">Closing Date</th>
+                <th class="p-3.5 text-right font-bold text-emerald-400">Cash In</th>
+                <th class="p-3.5 text-right font-bold text-sky-400">Bank Slips</th>
+                <th class="p-3.5 text-right font-bold text-white">Total Sales</th>
+                <th class="p-3.5 text-right font-bold text-rose-400">Expenses</th>
+                <th class="p-3.5 text-right font-bold text-brand-300">Net Profit</th>
+                <th class="p-3.5 text-center font-bold">Action</th>
+              </tr>
+            </thead>
+            <tbody id="historyTbody" class="divide-y divide-slate-800/60 text-slate-300">
+              <tr>
+                <td colspan="7" class="p-8 text-center text-slate-500">Loading historical closings...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 6: AI NATURAL LANGUAGE CHAT ASSISTANT -->
+    <!-- ========================================================================= -->
+    <section id="tab-chat" class="hidden space-y-4">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl p-5 flex flex-col h-[70vh]">
+        
+        <div class="flex items-center space-x-3 pb-4 border-b border-slate-800">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white font-bold shadow-lg shadow-purple-500/20">
+            🤖
+          </div>
+          <div>
+            <h3 class="font-bold text-base text-white">Rion Snooker AI Financial Assistant</h3>
+            <p class="text-xs text-slate-400">Ask questions about table sales, marker wages, fuel expenses, and member debts</p>
+          </div>
+        </div>
+
+        <!-- Chat Bubble History -->
+        <div id="chatHistory" class="flex-1 overflow-y-auto space-y-3.5 py-4 pr-1 text-xs">
+          <!-- Initial AI greeting -->
+          <div class="flex items-start space-x-3">
+            <div class="w-8 h-8 rounded-full bg-purple-600/20 text-purple-400 flex items-center justify-center text-xs font-bold">AI</div>
+            <div class="bg-slate-800 p-3.5 rounded-2xl rounded-tl-none border border-slate-700/60 max-w-xl text-slate-200 text-xs leading-relaxed">
+              🎱 <strong>Welcome to Rion Snooker Lounge AI Manager!</strong><br><br>
+              I have live access to your local club database, table receipts, daily closings, marker salaries, and customer Khata.<br><br>
+              You can ask me questions like:
+              <ul class="list-disc ml-4 mt-2 space-y-1 text-slate-300">
+                <li><em>"What is our total table cash vs bank slips this month?"</em></li>
+                <li><em>"Who owes the highest pending customer Udhaar?"</em></li>
+                <li><em>"What was our net profit for August 2026?"</em></li>
+                <li><em>"How much did we spend on marker salaries or generator diesel?"</em></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat Input Form -->
+        <form id="chatForm" onsubmit="submitChat(event)" class="pt-3 border-t border-slate-800 flex gap-2">
+          <input type="text" id="chatInput" placeholder="Ask anything about Rion Snooker financials..." class="flex-1 bg-slate-800 border border-slate-700 text-white text-xs rounded-xl px-4 py-2.5 focus:outline-none focus:border-purple-500">
+          <button type="submit" class="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow transition flex items-center gap-1.5">
+            <span>Ask</span> <i data-lucide="send" class="w-3.5 h-3.5"></i>
+          </button>
+        </form>
+
+      </div>
+    </section>
+
+
+    <!-- ========================================================================= -->
+    <!-- TAB 7: SETTINGS -->
+    <!-- ========================================================================= -->
+    <section id="tab-settings" class="hidden space-y-6">
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl max-w-2xl">
+        <h3 class="font-bold text-base text-white mb-4 flex items-center gap-2">
+          <i data-lucide="sliders" class="w-5 h-5 text-brand-400"></i> System Configuration
+        </h3>
+
+        <form id="settingsForm" onsubmit="saveSettings(event)" class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Currency Symbol</label>
+            <input type="text" id="settingCurrency" value="PKR " class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+          </div>
+
+          <div>
+            <label class="block text-xs font-semibold text-slate-300 mb-1">Google Gemini API Key (For OCR & AI Chat)</label>
+            <input type="password" id="settingApiKey" placeholder="AIzaSy..." class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
+            <p class="text-[11px] text-slate-500 mt-1">Stored safely on your local computer database.</p>
+          </div>
+
+          <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition">
+            Save Settings
+          </button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- CUSTOMER LEDGER MODAL -->
+  <div id="customerLedgerModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-2xl max-w-2xl w-full shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+      <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between bg-slate-800/50">
+        <div>
+          <h4 class="font-bold text-white text-base" id="modalCustomerName">Customer Ledger</h4>
+          <p class="text-xs text-slate-400 mt-0.5">All credit given and payments returned</p>
+        </div>
+        <button onclick="closeCustomerLedgerModal()" class="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-slate-700 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+      <div class="p-4 sm:p-5 overflow-y-auto flex-1">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-800 text-slate-400 uppercase text-[10px]">
+            <tr>
+              <th class="p-2.5">Date</th>
+              <th class="p-2.5">Type</th>
+              <th class="p-2.5">Description</th>
+              <th class="p-2.5 text-right">Amount</th>
+              <th class="p-2.5 text-right">Balance</th>
+            </tr>
+          </thead>
+          <tbody id="modalLedgerTbody" class="divide-y divide-slate-800 text-slate-300">
+          </tbody>
+        </table>
+      </div>
+      <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-between items-center">
+        <div class="text-xs font-bold text-white" id="modalNetBalanceSummary">Pending Balance: PKR 0.00</div>
+        <button onclick="closeCustomerLedgerModal()" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-4 py-2 rounded-xl transition">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sticky Bottom Summary Footer -->
+  <footer class="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-4 py-2 flex items-center justify-between text-xs shadow-2xl">
+    <div class="flex items-center space-x-2 text-slate-400">
+      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+      <span class="hidden sm:inline">Rion Snooker Lounge System</span>
+      <span class="text-slate-600">•</span>
+      <span id="activeDateFooterLabel">Live Synced</span>
+    </div>
+    <div class="flex items-center space-x-4">
+      <span class="text-slate-400">Net Day Closing:</span>
+      <span id="footerNetSettlement" class="text-sm font-black text-brand-300 tracking-tight">PKR 0.00</span>
+    </div>
+  </footer>
+
+  <!-- Frontend Logic -->
+  <script src="/static/app.js"></script>
+</body>
+</html>
