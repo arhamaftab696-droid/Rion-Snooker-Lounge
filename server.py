@@ -592,6 +592,48 @@ Please provide a helpful, polite, concise, and accurate financial response tailo
 def health_check():
     return {"status": "ok", "app": "Rion Snooker Lounge"}
 
+
+# =============================================================================
+# BACKUP & RESTORE ROUTES (SYNC LOCAL WITH CLOUD)
+# =============================================================================
+
+@app.get("/api/backup/download-db")
+def download_database_backup():
+    db_path = os.path.join(BASE_DIR, "transactions.db")
+    if not os.path.exists(db_path):
+        raise HTTPException(status_code=404, detail="Database file not found")
+    return FileResponse(
+        path=db_path,
+        filename=f"rion_transactions_backup_{datetime.now().strftime('%Y%m%d_%H%M%S')}.db",
+        media_type="application/x-sqlite3"
+    )
+
+
+@app.post("/api/backup/upload-db")
+async def upload_database_restore(file: UploadFile = File(...)):
+    if not file.filename.endswith(".db"):
+        raise HTTPException(status_code=400, detail="Invalid file type. Please upload a .db SQLite file.")
+    
+    db_path = os.path.join(BASE_DIR, "transactions.db")
+    temp_path = os.path.join(BASE_DIR, "transactions_temp.db")
+    
+    content = await file.read()
+    with open(temp_path, "wb") as f:
+        f.write(content)
+        
+    # Replace existing database
+    if os.path.exists(db_path):
+        backup_old = os.path.join(BASE_DIR, "transactions_pre_restore.db")
+        try:
+            shutil.copy2(db_path, backup_old)
+        except Exception:
+            pass
+            
+    shutil.move(temp_path, db_path)
+    db.init_db()
+    
+    return {"success": True, "message": "Database restored successfully!"}
+
 # Static Assets & Index
 @app.get("/", response_class=HTMLResponse)
 @app.head("/", response_class=HTMLResponse)

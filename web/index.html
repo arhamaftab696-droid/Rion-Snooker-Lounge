@@ -1199,13 +1199,44 @@
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1">Google Gemini API Key (For OCR & AI Chat)</label>
             <input type="password" id="settingApiKey" placeholder="AIzaSy..." class="w-full bg-slate-800 border border-slate-700 text-white text-xs rounded-xl p-2.5 focus:outline-none focus:border-brand-500">
-            <p class="text-[11px] text-slate-500 mt-1">Stored safely on your local computer database.</p>
+            <p class="text-[11px] text-slate-500 mt-1">Stored safely on your database.</p>
           </div>
 
           <button type="submit" class="bg-brand-600 hover:bg-brand-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl transition">
             Save Settings
           </button>
         </form>
+      </div>
+
+      <!-- Cloud Database Backup & Restore Card -->
+      <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-xl max-w-2xl">
+        <h3 class="font-bold text-base text-white mb-2 flex items-center gap-2">
+          <i data-lucide="database" class="w-5 h-5 text-indigo-400"></i> Cloud Database Backup & Sync
+        </h3>
+        <p class="text-xs text-slate-400 mb-4">Download a full snapshot of your financial data, customer khata, and staff ledgers, or restore from a previous backup file.</p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="bg-slate-800/60 border border-slate-700/80 p-4 rounded-xl flex flex-col justify-between">
+            <div>
+              <div class="font-bold text-xs text-white mb-1">📥 Download Cloud Backup</div>
+              <p class="text-[11px] text-slate-400 mb-3">Download the current SQLite <code class="text-indigo-300">transactions.db</code> file to your device.</p>
+            </div>
+            <a href="/api/backup/download-db" target="_blank" class="bg-indigo-600 hover:bg-indigo-500 text-white text-center text-xs font-bold py-2 px-3 rounded-xl transition shadow flex items-center justify-center gap-1.5">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i> Download .db Backup
+            </a>
+          </div>
+
+          <div class="bg-slate-800/60 border border-slate-700/80 p-4 rounded-xl flex flex-col justify-between">
+            <div>
+              <div class="font-bold text-xs text-white mb-1">📤 Restore / Upload Backup</div>
+              <p class="text-[11px] text-slate-400 mb-3">Upload a previously saved <code class="text-indigo-300">.db</code> file to restore data.</p>
+            </div>
+            <label class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-center text-xs font-bold py-2 px-3 rounded-xl transition cursor-pointer flex items-center justify-center gap-1.5">
+              <i data-lucide="upload" class="w-3.5 h-3.5"></i> Select & Upload .db
+              <input type="file" accept=".db" onchange="uploadDatabaseBackup(this)" class="hidden">
+            </label>
+          </div>
+        </div>
       </div>
     </section>
 

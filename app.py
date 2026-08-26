@@ -3430,6 +3430,54 @@ class TransactionApp(ctk.CTk):
         self.curr_opt.set(db.get_setting("currency", "PKR "))
         self.curr_opt.grid(row=1, column=1, sticky="w", padx=16, pady=8)
 
+        # Cloud Sync Card
+        cloud_card = ctk.CTkFrame(parent, corner_radius=10)
+        cloud_card.pack(fill="x", pady=(0, 16))
+
+        ctk.CTkLabel(cloud_card, text="☁️ Cloud Database Sync & Backup", font=ctk.CTkFont(size=16, weight="bold"), text_color=("#4f46e5", "#818cf8")).pack(anchor="w", padx=16, pady=(14, 4))
+        ctk.CTkLabel(
+            cloud_card,
+            text="Synchronize your Mac's database with the 24/7 online cloud server (Render / Mobile).",
+            font=ctk.CTkFont(size=12),
+            text_color="gray60"
+        ).pack(anchor="w", padx=16, pady=(0, 12))
+
+        sync_url_f = ctk.CTkFrame(cloud_card, fg_color="transparent")
+        sync_url_f.pack(fill="x", padx=16, pady=(0, 10))
+        sync_url_f.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(sync_url_f, text="Cloud URL:", font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=0, padx=(0, 8), sticky="w")
+        self.cloud_url_entry = ctk.CTkEntry(sync_url_f, height=34)
+        self.cloud_url_entry.insert(0, db.get_setting("cloud_url", "https://rion-snooker-lounge-rk51.onrender.com"))
+        self.cloud_url_entry.grid(row=0, column=1, sticky="ew", padx=(0, 8))
+
+        sync_btns = ctk.CTkFrame(cloud_card, fg_color="transparent")
+        sync_btns.pack(fill="x", padx=16, pady=(0, 16))
+        sync_btns.grid_columnconfigure(0, weight=1)
+        sync_btns.grid_columnconfigure(1, weight=1)
+
+        pull_btn = ctk.CTkButton(
+            sync_btns,
+            text="⬇️ Pull Database from Cloud",
+            fg_color="#4f46e5",
+            hover_color="#4338ca",
+            height=36,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._pull_cloud_database
+        )
+        pull_btn.grid(row=0, column=0, padx=(0, 6), sticky="ew")
+
+        push_btn = ctk.CTkButton(
+            sync_btns,
+            text="⬆️ Push Local Database to Cloud",
+            fg_color="#059669",
+            hover_color="#047857",
+            height=36,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            command=self._push_local_database_to_cloud
+        )
+        push_btn.grid(row=0, column=1, padx=(6, 0), sticky="ew")
+
         # Data Management / Danger Zone
         danger_card = ctk.CTkFrame(parent, corner_radius=10)
         danger_card.pack(fill="x", pady=(0, 16))
@@ -3445,6 +3493,62 @@ class TransactionApp(ctk.CTk):
             command=self._clear_all_data
         )
         clear_btn.pack(anchor="w", padx=16, pady=(0, 16))
+
+    def _pull_cloud_database(self):
+        cloud_url = self.cloud_url_entry.get().strip().rstrip("/")
+        if not cloud_url:
+            messagebox.showwarning("Error", "Please enter a valid Cloud URL.")
+            return
+
+        db.set_setting("cloud_url", cloud_url)
+        if not messagebox.askyesno("Confirm Sync", "Are you sure you want to pull the latest database from the Cloud? This will update your local database records with the cloud data."):
+            return
+
+        try:
+            import urllib.request
+            req = urllib.request.Request(f"{cloud_url}/api/backup/download-db", headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=20) as res:
+                content = res.read()
+                
+            db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transactions.db")
+            temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transactions_temp.db")
+            with open(temp_path, "wb") as f:
+                f.write(content)
+            shutil.move(temp_path, db_path)
+            db.init_db()
+
+            self._refresh_dashboard()
+            self._refresh_closing_tab()
+            self._refresh_khata_tab()
+            self._refresh_staff_tab()
+            self._update_sidebar_stats()
+            messagebox.showinfo("Sync Success", "✅ Successfully pulled latest database from Cloud!")
+        except Exception as e:
+            messagebox.showerror("Sync Failed", f"Failed to pull from Cloud:\n{str(e)}")
+
+    def _push_local_database_to_cloud(self):
+        cloud_url = self.cloud_url_entry.get().strip().rstrip("/")
+        if not cloud_url:
+            messagebox.showwarning("Error", "Please enter a valid Cloud URL.")
+            return
+
+        db.set_setting("cloud_url", cloud_url)
+        if not messagebox.askyesno("Confirm Upload", "Are you sure you want to push your local database to the Cloud? This will update the online web database with your Mac's current records."):
+            return
+
+        try:
+            import requests
+            db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transactions.db")
+            with open(db_path, "rb") as f:
+                files = {"file": ("transactions.db", f, "application/x-sqlite3")}
+                res = requests.post(f"{cloud_url}/api/backup/upload-db", files=files, timeout=30)
+
+            if res.status_code == 200:
+                messagebox.showinfo("Upload Success", "✅ Successfully pushed local database to Cloud!")
+            else:
+                messagebox.showerror("Upload Failed", f"Cloud server responded with error: {res.text}")
+        except Exception as e:
+            messagebox.showerror("Upload Failed", f"Failed to push to Cloud:\n{str(e)}")
 
     def _toggle_show_key(self):
         if self.show_key_var.get():

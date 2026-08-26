@@ -1515,6 +1515,35 @@ async function saveSettings(e) {
     }
 }
 
+async function uploadDatabaseBackup(input) {
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    if (!confirm(`Are you sure you want to restore the database from '${file.name}'? This will replace the current database.`)) {
+        input.value = "";
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    try {
+        const res = await fetch("/api/backup/upload-db", {
+            method: "POST",
+            body: formData
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Failed to upload database backup");
+        }
+        alert("✅ Database restored successfully! Reloading data...");
+        window.location.reload();
+    } catch (err) {
+        alert("Error restoring database: " + err.message);
+    } finally {
+        input.value = "";
+    }
+}
+
 // =============================================================================
 // UTILITY FUNCTIONS
 // =============================================================================
