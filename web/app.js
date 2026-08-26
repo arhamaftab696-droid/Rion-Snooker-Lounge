@@ -6,8 +6,128 @@ let activeSelectedMonth = "";
 let khataClientsList = [];
 let staffMembersList = [];
 
+// =============================================================================
+// AUTHENTICATION & PIN PROTECTION
+// =============================================================================
+function isSessionAuthenticated() {
+    return sessionStorage.getItem("rion_auth_token") === "rion_auth_session_valid";
+}
+
+function checkAuthOnLoad() {
+    const overlay = document.getElementById("login-overlay");
+    if (isSessionAuthenticated()) {
+        if (overlay) overlay.classList.add("hidden");
+    } else {
+        if (overlay) {
+            overlay.classList.remove("hidden");
+            const pinIn = document.getElementById("loginPinInput");
+            if (pinIn) pinIn.focus();
+        }
+    }
+}
+
+async function handleWebLogin(e) {
+    if (e) e.preventDefault();
+    const pinIn = document.getElementById("loginPinInput");
+    const errEl = document.getElementById("loginErrorMsg");
+    const btn = document.getElementById("loginSubmitBtn");
+    const pin = pinIn?.value.trim() || "";
+
+    if (!pin) return;
+
+    if (btn) btn.disabled = true;
+    if (errEl) errEl.classList.add("hidden");
+
+    try {
+        const res = await fetch("/api/auth/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ pin: pin })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Invalid Security PIN");
+        }
+
+        const data = await res.json();
+        sessionStorage.setItem("rion_auth_token", data.token || "rion_auth_session_valid");
+        
+        const overlay = document.getElementById("login-overlay");
+        if (overlay) overlay.classList.add("hidden");
+        if (pinIn) pinIn.value = "";
+    } catch (e) {
+        if (errEl) {
+            errEl.textContent = e.message || "Invalid PIN. Please try again.";
+            errEl.classList.remove("hidden");
+        }
+        if (pinIn) {
+            pinIn.value = "";
+            pinIn.focus();
+        }
+    } finally {
+        if (btn) btn.disabled = false;
+    }
+}
+
+function handleWebLogout() {
+    sessionStorage.removeItem("rion_auth_token");
+    const overlay = document.getElementById("login-overlay");
+    if (overlay) {
+        overlay.classList.remove("hidden");
+        const pinIn = document.getElementById("loginPinInput");
+        if (pinIn) {
+            pinIn.value = "";
+            pinIn.focus();
+        }
+    }
+}
+
+function toggleLoginPinVisibility() {
+    const pinIn = document.getElementById("loginPinInput");
+    if (!pinIn) return;
+    pinIn.type = pinIn.type === "password" ? "text" : "password";
+}
+
+async function handleWebChangePin(e) {
+    e.preventDefault();
+    const cur = document.getElementById("currentPinInput")?.value.trim();
+    const nxt = document.getElementById("newPinInput")?.value.trim();
+    const msgEl = document.getElementById("pinStatusMsg");
+
+    if (!cur || !nxt) return;
+
+    try {
+        const res = await fetch("/api/auth/change-pin", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ current_pin: cur, new_pin: nxt })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Failed to update PIN");
+        }
+
+        if (msgEl) {
+            msgEl.textContent = "✅ Security PIN updated successfully!";
+            msgEl.className = "text-xs py-1.5 font-semibold text-emerald-400";
+            msgEl.classList.remove("hidden");
+        }
+        document.getElementById("currentPinInput").value = "";
+        document.getElementById("newPinInput").value = "";
+    } catch (e) {
+        if (msgEl) {
+            msgEl.textContent = "❌ " + e.message;
+            msgEl.className = "text-xs py-1.5 font-semibold text-rose-400";
+            msgEl.classList.remove("hidden");
+        }
+    }
+}
+
 // Initialize on page load
 document.addEventListener("DOMContentLoaded", async () => {
+    checkAuthOnLoad();
     const dInput = document.getElementById("activeDateInput");
     if (dInput) dInput.value = activeDate;
     

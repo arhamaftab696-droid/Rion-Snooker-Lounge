@@ -462,6 +462,22 @@ def set_setting(key: str, value: str, db_path: str = DB_FILE) -> None:
     conn.close()
 
 
+def get_admin_pin(db_path: str = DB_FILE) -> str:
+    """Get the current security PIN (default: 1234)."""
+    return get_setting("admin_pin", "1234", db_path=db_path)
+
+
+def set_admin_pin(new_pin: str, db_path: str = DB_FILE) -> None:
+    """Update the security PIN."""
+    set_setting("admin_pin", str(new_pin).strip(), db_path=db_path)
+
+
+def verify_admin_pin(input_pin: str, db_path: str = DB_FILE) -> bool:
+    """Verify if the provided PIN matches the configured admin PIN."""
+    current_pin = get_admin_pin(db_path=db_path)
+    return str(input_pin).strip() == current_pin.strip()
+
+
 def get_daily_closings(
     date_from: Optional[str] = None,
     date_to: Optional[str] = None,

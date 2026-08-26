@@ -464,19 +464,110 @@ class TransactionApp(ctk.CTk):
         self.current_tab = "dashboard"
         self.batch_queue: List[Dict[str, Any]] = []
         self.is_scanning = False
+        self.sidebar = None
+        self.content_frames = {}
 
         # Ensure integrated Web Server is running for real-time web & mobile sync
         ensure_web_server_running()
 
         # Main Layout (Sidebar + Main Content Area)
-        self.grid_columnconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        self._build_sidebar()
-        self._build_content_frames()
+        # Show Security Lock / Login Screen first
+        self._build_login_screen()
 
-        # Default to Dashboard view
-        self._show_tab("dashboard")
+    def _build_login_screen(self):
+        """Displays full-window login / security lock screen."""
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=0)
+
+        self.login_frame = ctk.CTkFrame(self, fg_color=("gray95", "gray10"), corner_radius=0)
+        self.login_frame.grid(row=0, column=0, sticky="nsew")
+        self.login_frame.grid_columnconfigure(0, weight=1)
+        self.login_frame.grid_rowconfigure(0, weight=1)
+
+        box = ctk.CTkFrame(self.login_frame, corner_radius=16, fg_color=("gray85", "gray17"), width=380)
+        box.grid(row=0, column=0, padx=40, pady=40)
+        box.grid_columnconfigure(0, weight=1)
+
+        # Logo
+        ctk.CTkLabel(box, text="🎱", font=ctk.CTkFont(size=48)).pack(pady=(28, 4))
+        ctk.CTkLabel(box, text="Rion Snooker Lounge", font=ctk.CTkFont(size=22, weight="bold")).pack(pady=(0, 2))
+        ctk.CTkLabel(box, text="Lounge Management & Closing System", font=ctk.CTkFont(size=12), text_color="gray60").pack(pady=(0, 20))
+
+        # PIN Entry
+        ctk.CTkLabel(box, text="Enter Security PIN / Password:", font=ctk.CTkFont(size=13, weight="bold")).pack(anchor="w", padx=28, pady=(0, 4))
+        
+        pin_row = ctk.CTkFrame(box, fg_color="transparent")
+        pin_row.pack(fill="x", padx=28, pady=(0, 8))
+        pin_row.grid_columnconfigure(0, weight=1)
+
+        self.login_pin_entry = ctk.CTkEntry(
+            pin_row,
+            show="*",
+            height=42,
+            font=ctk.CTkFont(size=18, weight="bold"),
+            justify="center",
+            placeholder_text="••••"
+        )
+        self.login_pin_entry.grid(row=0, column=0, sticky="ew", padx=(0, 6))
+
+        self.show_login_pin_var = ctk.BooleanVar(value=False)
+        def toggle_pin():
+            self.login_pin_entry.configure(show="" if self.show_login_pin_var.get() else "*")
+
+        show_chk = ctk.CTkCheckBox(pin_row, text="Show", variable=self.show_login_pin_var, command=toggle_pin, width=60)
+        show_chk.grid(row=0, column=1)
+
+        self.login_err_label = ctk.CTkLabel(box, text="", font=ctk.CTkFont(size=12, weight="bold"), text_color="#ef4444")
+        self.login_err_label.pack(pady=(0, 6))
+
+        # Unlock button
+        unlock_btn = ctk.CTkButton(
+            box,
+            text="🔓 Unlock Software",
+            font=ctk.CTkFont(size=14, weight="bold"),
+            height=44,
+            fg_color="#10b981",
+            hover_color="#059669",
+            command=self._attempt_login
+        )
+        unlock_btn.pack(fill="x", padx=28, pady=(0, 12))
+
+        ctk.CTkLabel(box, text="Default PIN: 1234 (Change in Settings)", font=ctk.CTkFont(size=11), text_color="gray60").pack(pady=(0, 24))
+
+        self.login_pin_entry.bind("<Return>", lambda e: self._attempt_login())
+        self.after(200, lambda: self.login_pin_entry.focus_set())
+
+    def _attempt_login(self):
+        entered_pin = self.login_pin_entry.get().strip()
+        if db.verify_admin_pin(entered_pin):
+            self.login_err_label.configure(text="")
+            self.login_frame.grid_forget()
+
+            self.grid_columnconfigure(0, weight=0)
+            self.grid_columnconfigure(1, weight=1)
+
+            if not self.sidebar:
+                self._build_sidebar()
+                self._build_content_frames()
+                self._show_tab("dashboard")
+            else:
+                self.sidebar.grid(row=0, column=0, sticky="nsew")
+                self._show_tab(self.current_tab or "dashboard")
+        else:
+            self.login_err_label.configure(text="❌ Invalid PIN. Please try again.")
+            self.login_pin_entry.delete(0, "end")
+            self.login_pin_entry.focus_set()
+
+    def _lock_app(self):
+        """Locks the application and displays the login screen."""
+        if self.sidebar:
+            self.sidebar.grid_forget()
+        for f in self.content_frames.values():
+            f.grid_forget()
+        self._build_login_screen()
 
     # =========================================================================
     # SIDEBAR
@@ -557,9 +648,21 @@ class TransactionApp(ctk.CTk):
         )
         sync_btn.grid(row=9, column=0, padx=14, pady=(4, 4), sticky="ew")
 
+        # Lock App Button
+        lock_btn = ctk.CTkButton(
+            self.sidebar,
+            text="🔒 Lock App",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color=("#ef4444", "#dc2626"),
+            hover_color=("#dc2626", "#b91c1c"),
+            height=32,
+            command=self._lock_app
+        )
+        lock_btn.grid(row=10, column=0, padx=14, pady=(4, 4), sticky="ew")
+
         # Sidebar Bottom Info Card
         self.sidebar_stats_frame = ctk.CTkFrame(self.sidebar, fg_color=("gray85", "gray17"), corner_radius=8)
-        self.sidebar_stats_frame.grid(row=10, column=0, padx=14, pady=(10, 10), sticky="sew")
+        self.sidebar_stats_frame.grid(row=11, column=0, padx=14, pady=(8, 8), sticky="sew")
 
         self.sidebar_total_label = ctk.CTkLabel(
             self.sidebar_stats_frame,
@@ -585,7 +688,7 @@ class TransactionApp(ctk.CTk):
             width=190
         )
         self.theme_menu.set(db.get_setting("theme", "Dark"))
-        self.theme_menu.grid(row=11, column=0, padx=14, pady=(0, 20), sticky="s")
+        self.theme_menu.grid(row=12, column=0, padx=14, pady=(0, 16), sticky="s")
 
     def _open_cloud_sync_dialog(self):
         """Instant modal dialog for Cloud Database Sync & Pull/Push."""
@@ -3612,7 +3715,47 @@ class TransactionApp(ctk.CTk):
         self.curr_opt.set(db.get_setting("currency", "PKR "))
         self.curr_opt.grid(row=1, column=1, sticky="w", padx=16, pady=8)
 
-        # 4. Data Management / Danger Zone
+        # 4. Security PIN Management Card
+        pin_card = ctk.CTkFrame(scroll, corner_radius=10)
+        pin_card.pack(fill="x", pady=(0, 16))
+
+        ctk.CTkLabel(pin_card, text="🔐 Security & Access PIN", font=ctk.CTkFont(size=16, weight="bold"), text_color=("#d97706", "#fbbf24")).pack(anchor="w", padx=16, pady=(14, 4))
+        ctk.CTkLabel(
+            pin_card,
+            text="Change the security PIN required to unlock and access the software.",
+            font=ctk.CTkFont(size=12),
+            text_color="gray60"
+        ).pack(anchor="w", padx=16, pady=(0, 12))
+
+        pin_f = ctk.CTkFrame(pin_card, fg_color="transparent")
+        pin_f.pack(fill="x", padx=16, pady=(0, 12))
+        pin_f.grid_columnconfigure(0, weight=1)
+        pin_f.grid_columnconfigure(1, weight=1)
+
+        c_f = ctk.CTkFrame(pin_f, fg_color="transparent")
+        c_f.grid(row=0, column=0, sticky="ew", padx=(0, 6))
+        ctk.CTkLabel(c_f, text="Current PIN:", font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w", pady=(0, 2))
+        self.cur_pin_entry = ctk.CTkEntry(c_f, show="*", height=34, placeholder_text="••••")
+        self.cur_pin_entry.pack(fill="x")
+
+        n_f = ctk.CTkFrame(pin_f, fg_color="transparent")
+        n_f.grid(row=0, column=1, sticky="ew", padx=(6, 0))
+        ctk.CTkLabel(n_f, text="New Security PIN:", font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w", pady=(0, 2))
+        self.new_pin_entry = ctk.CTkEntry(n_f, show="*", height=34, placeholder_text="••••")
+        self.new_pin_entry.pack(fill="x")
+
+        save_pin_btn = ctk.CTkButton(
+            pin_card,
+            text="Update Security PIN",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#d97706",
+            hover_color="#b45309",
+            height=36,
+            command=self._update_desktop_pin
+        )
+        save_pin_btn.pack(anchor="w", padx=16, pady=(0, 16))
+
+        # 5. Data Management / Danger Zone
         danger_card = ctk.CTkFrame(scroll, corner_radius=10)
         danger_card.pack(fill="x", pady=(0, 16))
 
@@ -3627,6 +3770,23 @@ class TransactionApp(ctk.CTk):
             command=self._clear_all_data
         )
         clear_btn.pack(anchor="w", padx=16, pady=(0, 16))
+
+    def _update_desktop_pin(self):
+        cur = self.cur_pin_entry.get().strip()
+        nxt = self.new_pin_entry.get().strip()
+
+        if not db.verify_admin_pin(cur):
+            messagebox.showerror("Error", "Current PIN is incorrect.")
+            return
+
+        if len(nxt) < 4:
+            messagebox.showwarning("Warning", "New PIN must be at least 4 characters/digits.")
+            return
+
+        db.set_admin_pin(nxt)
+        self.cur_pin_entry.delete(0, "end")
+        self.new_pin_entry.delete(0, "end")
+        messagebox.showinfo("Success", "✅ Security PIN updated successfully!")
 
     def _pull_cloud_database(self):
         cloud_url = self.cloud_url_entry.get().strip().rstrip("/")

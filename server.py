@@ -76,6 +76,38 @@ def get_closing_for_date(target_date: str):
     return db.get_closing_summary_for_date(target_date)
 
 
+class LoginRequest(BaseModel):
+    pin: str
+
+
+class ChangePinRequest(BaseModel):
+    current_pin: str
+    new_pin: str
+
+
+@app.post("/api/auth/login")
+def login(payload: LoginRequest):
+    if db.verify_admin_pin(payload.pin):
+        return {"success": True, "token": "rion_auth_session_valid", "message": "Login successful!"}
+    raise HTTPException(status_code=401, detail="Invalid Security PIN. Please try again.")
+
+
+@app.post("/api/auth/verify")
+def verify_auth(payload: LoginRequest):
+    valid = db.verify_admin_pin(payload.pin)
+    return {"authenticated": valid}
+
+
+@app.post("/api/auth/change-pin")
+def change_pin(payload: ChangePinRequest):
+    if not db.verify_admin_pin(payload.current_pin):
+        raise HTTPException(status_code=401, detail="Current PIN is incorrect.")
+    if len(payload.new_pin.strip()) < 4:
+        raise HTTPException(status_code=400, detail="New PIN must be at least 4 characters.")
+    db.set_admin_pin(payload.new_pin.strip())
+    return {"success": True, "message": "Security PIN updated successfully!"}
+
+
 class SettleUdhaarRequest(BaseModel):
     tx_id: int
     settle_into: str = "Cash"
