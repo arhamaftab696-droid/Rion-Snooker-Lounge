@@ -490,6 +490,18 @@ class TransactionApp(ctk.CTk):
         )
         web_btn.grid(row=8, column=0, padx=14, pady=(8, 4), sticky="ew")
 
+        # Cloud Sync button
+        sync_btn = ctk.CTkButton(
+            self.sidebar,
+            text="☁️ Sync with Cloud",
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#4f46e5",
+            hover_color="#4338ca",
+            height=34,
+            command=self._open_cloud_sync_dialog
+        )
+        sync_btn.grid(row=9, column=0, padx=14, pady=(4, 4), sticky="ew")
+
         # Sidebar Bottom Info Card
         self.sidebar_stats_frame = ctk.CTkFrame(self.sidebar, fg_color=("gray85", "gray17"), corner_radius=8)
         self.sidebar_stats_frame.grid(row=10, column=0, padx=14, pady=(10, 10), sticky="sew")
@@ -519,6 +531,68 @@ class TransactionApp(ctk.CTk):
         )
         self.theme_menu.set(db.get_setting("theme", "Dark"))
         self.theme_menu.grid(row=11, column=0, padx=14, pady=(0, 20), sticky="s")
+
+    def _open_cloud_sync_dialog(self):
+        """Instant modal dialog for Cloud Database Sync & Pull/Push."""
+        dlg = ctk.CTkToplevel(self)
+        dlg.title("☁️ Cloud Database Sync")
+        dlg.geometry("500x380")
+        dlg.transient(self)
+        dlg.grab_set()
+
+        ctk.CTkLabel(dlg, text="☁️ Cloud Database Sync", font=ctk.CTkFont(size=18, weight="bold")).pack(pady=(18, 4))
+        ctk.CTkLabel(dlg, text="Synchronize your Mac app with your 24/7 Render Cloud Server.", font=ctk.CTkFont(size=11), text_color="gray60").pack(pady=(0, 14))
+
+        box = ctk.CTkFrame(dlg, fg_color=("gray85", "gray17"), corner_radius=10)
+        box.pack(fill="x", padx=20, pady=(0, 14))
+
+        ctk.CTkLabel(box, text="Cloud Server URL:", font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w", padx=14, pady=(12, 4))
+        cloud_url_in = ctk.CTkEntry(box, height=34)
+        cloud_url_in.insert(0, db.get_setting("cloud_url", "https://rion-snooker-lounge-rk51.onrender.com"))
+        cloud_url_in.pack(fill="x", padx=14, pady=(0, 12))
+
+        btn_f = ctk.CTkFrame(dlg, fg_color="transparent")
+        btn_f.pack(fill="x", padx=20)
+        btn_f.grid_columnconfigure(0, weight=1)
+        btn_f.grid_columnconfigure(1, weight=1)
+
+        def do_pull():
+            url = cloud_url_in.get().strip().rstrip("/")
+            if not url:
+                return
+            db.set_setting("cloud_url", url)
+            dlg.destroy()
+            self._do_pull_from_cloud(url)
+
+        def do_push():
+            url = cloud_url_in.get().strip().rstrip("/")
+            if not url:
+                return
+            db.set_setting("cloud_url", url)
+            dlg.destroy()
+            self._do_push_to_cloud(url)
+
+        pull_b = ctk.CTkButton(
+            btn_f,
+            text="⬇️ Pull from Cloud\n(Update Mac)",
+            height=44,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#4f46e5",
+            hover_color="#4338ca",
+            command=do_pull
+        )
+        pull_b.grid(row=0, column=0, padx=(0, 6), sticky="ew")
+
+        push_b = ctk.CTkButton(
+            btn_f,
+            text="⬆️ Push to Cloud\n(Update Server)",
+            height=44,
+            font=ctk.CTkFont(size=12, weight="bold"),
+            fg_color="#059669",
+            hover_color="#047857",
+            command=do_push
+        )
+        push_b.grid(row=0, column=1, padx=(6, 0), sticky="ew")
 
     def _open_web_connect_dialog(self):
         """Show connection details and open web portal in browser."""
@@ -3361,12 +3435,65 @@ class TransactionApp(ctk.CTk):
     # =========================================================================
     def _build_settings_tab(self, parent):
         parent.grid_columnconfigure(0, weight=1)
+        parent.grid_rowconfigure(0, weight=1)
 
-        head = ctk.CTkLabel(parent, text="Application Settings", font=ctk.CTkFont(size=24, weight="bold"))
+        scroll = ctk.CTkScrollableFrame(parent, corner_radius=10)
+        scroll.grid(row=0, column=0, sticky="nsew")
+        scroll.grid_columnconfigure(0, weight=1)
+
+        head = ctk.CTkLabel(scroll, text="Application Settings", font=ctk.CTkFont(size=24, weight="bold"))
         head.pack(anchor="w", pady=(0, 16))
 
-        # API Key Section
-        api_card = ctk.CTkFrame(parent, corner_radius=10)
+        # 1. Cloud Sync Card (AT TOP)
+        cloud_card = ctk.CTkFrame(scroll, corner_radius=10, fg_color=("gray85", "gray17"))
+        cloud_card.pack(fill="x", pady=(0, 16))
+
+        ctk.CTkLabel(cloud_card, text="☁️ Cloud Database Sync & Backup", font=ctk.CTkFont(size=16, weight="bold"), text_color=("#4f46e5", "#818cf8")).pack(anchor="w", padx=16, pady=(14, 4))
+        ctk.CTkLabel(
+            cloud_card,
+            text="Synchronize your Mac's database with the 24/7 online cloud server (Render / Mobile).",
+            font=ctk.CTkFont(size=12),
+            text_color="gray60"
+        ).pack(anchor="w", padx=16, pady=(0, 12))
+
+        sync_url_f = ctk.CTkFrame(cloud_card, fg_color="transparent")
+        sync_url_f.pack(fill="x", padx=16, pady=(0, 10))
+        sync_url_f.grid_columnconfigure(1, weight=1)
+
+        ctk.CTkLabel(sync_url_f, text="Cloud URL:", font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=0, padx=(0, 8), sticky="w")
+        self.cloud_url_entry = ctk.CTkEntry(sync_url_f, height=34)
+        self.cloud_url_entry.insert(0, db.get_setting("cloud_url", "https://rion-snooker-lounge-rk51.onrender.com"))
+        self.cloud_url_entry.grid(row=0, column=1, sticky="ew", padx=(0, 8))
+
+        sync_btns = ctk.CTkFrame(cloud_card, fg_color="transparent")
+        sync_btns.pack(fill="x", padx=16, pady=(0, 16))
+        sync_btns.grid_columnconfigure(0, weight=1)
+        sync_btns.grid_columnconfigure(1, weight=1)
+
+        pull_btn = ctk.CTkButton(
+            sync_btns,
+            text="⬇️ Pull Database from Cloud",
+            fg_color="#4f46e5",
+            hover_color="#4338ca",
+            height=38,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            command=self._pull_cloud_database
+        )
+        pull_btn.grid(row=0, column=0, padx=(0, 6), sticky="ew")
+
+        push_btn = ctk.CTkButton(
+            sync_btns,
+            text="⬆️ Push Local Database to Cloud",
+            fg_color="#059669",
+            hover_color="#047857",
+            height=38,
+            font=ctk.CTkFont(size=13, weight="bold"),
+            command=self._push_local_database_to_cloud
+        )
+        push_btn.grid(row=0, column=1, padx=(6, 0), sticky="ew")
+
+        # 2. API Key Section
+        api_card = ctk.CTkFrame(scroll, corner_radius=10)
         api_card.pack(fill="x", pady=(0, 16))
 
         ctk.CTkLabel(api_card, text="🔑 Google Gemini API Configuration", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", padx=16, pady=(14, 4))
@@ -3398,8 +3525,8 @@ class TransactionApp(ctk.CTk):
         self.api_status_label = ctk.CTkLabel(api_card, text="", font=ctk.CTkFont(size=12))
         self.api_status_label.pack(anchor="w", padx=16, pady=(0, 12))
 
-        # Model & Currency Preferences
-        pref_card = ctk.CTkFrame(parent, corner_radius=10)
+        # 3. Model & Currency Preferences
+        pref_card = ctk.CTkFrame(scroll, corner_radius=10)
         pref_card.pack(fill="x", pady=(0, 16))
 
         ctk.CTkLabel(pref_card, text="⚙️ Preferences", font=ctk.CTkFont(size=16, weight="bold")).pack(anchor="w", padx=16, pady=(14, 12))
@@ -3430,56 +3557,8 @@ class TransactionApp(ctk.CTk):
         self.curr_opt.set(db.get_setting("currency", "PKR "))
         self.curr_opt.grid(row=1, column=1, sticky="w", padx=16, pady=8)
 
-        # Cloud Sync Card
-        cloud_card = ctk.CTkFrame(parent, corner_radius=10)
-        cloud_card.pack(fill="x", pady=(0, 16))
-
-        ctk.CTkLabel(cloud_card, text="☁️ Cloud Database Sync & Backup", font=ctk.CTkFont(size=16, weight="bold"), text_color=("#4f46e5", "#818cf8")).pack(anchor="w", padx=16, pady=(14, 4))
-        ctk.CTkLabel(
-            cloud_card,
-            text="Synchronize your Mac's database with the 24/7 online cloud server (Render / Mobile).",
-            font=ctk.CTkFont(size=12),
-            text_color="gray60"
-        ).pack(anchor="w", padx=16, pady=(0, 12))
-
-        sync_url_f = ctk.CTkFrame(cloud_card, fg_color="transparent")
-        sync_url_f.pack(fill="x", padx=16, pady=(0, 10))
-        sync_url_f.grid_columnconfigure(1, weight=1)
-
-        ctk.CTkLabel(sync_url_f, text="Cloud URL:", font=ctk.CTkFont(size=12, weight="bold")).grid(row=0, column=0, padx=(0, 8), sticky="w")
-        self.cloud_url_entry = ctk.CTkEntry(sync_url_f, height=34)
-        self.cloud_url_entry.insert(0, db.get_setting("cloud_url", "https://rion-snooker-lounge-rk51.onrender.com"))
-        self.cloud_url_entry.grid(row=0, column=1, sticky="ew", padx=(0, 8))
-
-        sync_btns = ctk.CTkFrame(cloud_card, fg_color="transparent")
-        sync_btns.pack(fill="x", padx=16, pady=(0, 16))
-        sync_btns.grid_columnconfigure(0, weight=1)
-        sync_btns.grid_columnconfigure(1, weight=1)
-
-        pull_btn = ctk.CTkButton(
-            sync_btns,
-            text="⬇️ Pull Database from Cloud",
-            fg_color="#4f46e5",
-            hover_color="#4338ca",
-            height=36,
-            font=ctk.CTkFont(size=12, weight="bold"),
-            command=self._pull_cloud_database
-        )
-        pull_btn.grid(row=0, column=0, padx=(0, 6), sticky="ew")
-
-        push_btn = ctk.CTkButton(
-            sync_btns,
-            text="⬆️ Push Local Database to Cloud",
-            fg_color="#059669",
-            hover_color="#047857",
-            height=36,
-            font=ctk.CTkFont(size=12, weight="bold"),
-            command=self._push_local_database_to_cloud
-        )
-        push_btn.grid(row=0, column=1, padx=(6, 0), sticky="ew")
-
-        # Data Management / Danger Zone
-        danger_card = ctk.CTkFrame(parent, corner_radius=10)
+        # 4. Data Management / Danger Zone
+        danger_card = ctk.CTkFrame(scroll, corner_radius=10)
         danger_card.pack(fill="x", pady=(0, 16))
 
         ctk.CTkLabel(danger_card, text="🗑️ Data Management", font=ctk.CTkFont(size=16, weight="bold"), text_color="#ef4444").pack(anchor="w", padx=16, pady=(14, 4))
@@ -3499,8 +3578,10 @@ class TransactionApp(ctk.CTk):
         if not cloud_url:
             messagebox.showwarning("Error", "Please enter a valid Cloud URL.")
             return
-
         db.set_setting("cloud_url", cloud_url)
+        self._do_pull_from_cloud(cloud_url)
+
+    def _do_pull_from_cloud(self, cloud_url: str):
         if not messagebox.askyesno("Confirm Sync", "Are you sure you want to pull the latest database from the Cloud? This will update your local database records with the cloud data."):
             return
 
@@ -3531,8 +3612,10 @@ class TransactionApp(ctk.CTk):
         if not cloud_url:
             messagebox.showwarning("Error", "Please enter a valid Cloud URL.")
             return
-
         db.set_setting("cloud_url", cloud_url)
+        self._do_push_to_cloud(cloud_url)
+
+    def _do_push_to_cloud(self, cloud_url: str):
         if not messagebox.askyesno("Confirm Upload", "Are you sure you want to push your local database to the Cloud? This will update the online web database with your Mac's current records."):
             return
 
