@@ -565,7 +565,7 @@ class TransactionApp(ctk.CTk):
             # Auto-prompt Touch ID on login screen
             self.after(300, self._attempt_touchid_login)
 
-        ctk.CTkLabel(box, text="Default PIN: 1234 (Change in Settings)", font=ctk.CTkFont(size=11), text_color="gray60").pack(pady=(0, 20))
+        ctk.CTkLabel(box, text="Security PIN Protected (Change in Settings)", font=ctk.CTkFont(size=11), text_color="gray60").pack(pady=(0, 20))
 
         self.login_pin_entry.bind("<Return>", lambda e: self._attempt_login())
         self.after(200, lambda: self.login_pin_entry.focus_set())

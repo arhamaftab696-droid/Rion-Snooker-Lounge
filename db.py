@@ -463,8 +463,8 @@ def set_setting(key: str, value: str, db_path: str = DB_FILE) -> None:
 
 
 def get_admin_pin(db_path: str = DB_FILE) -> str:
-    """Get the current security PIN (default: 1234)."""
-    return get_setting("admin_pin", "1234", db_path=db_path)
+    """Get the current security PIN (default: 6861)."""
+    return get_setting("admin_pin", "6861", db_path=db_path)
 
 
 def set_admin_pin(new_pin: str, db_path: str = DB_FILE) -> None:
