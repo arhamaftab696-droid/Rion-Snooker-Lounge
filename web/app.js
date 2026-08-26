@@ -265,6 +265,8 @@ function setEntryType(type) {
     const btnUdhRet = document.getElementById("btn-type-udhaar-ret");
     const descIn = document.getElementById("entryDesc");
     const catIn = document.getElementById("entryCategory");
+    const custWrap = document.getElementById("entryCustomerSelectWrapper");
+    const descLabel = document.getElementById("entryDescLabel");
 
     if (btnExp) btnExp.className = "py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white";
     if (btnCrd) btnCrd.className = "py-2 text-xs font-bold rounded-lg transition text-slate-400 hover:text-white";
@@ -275,18 +277,37 @@ function setEntryType(type) {
         if (btnExp) btnExp.className = "py-2 text-xs font-bold rounded-lg transition bg-rose-600 text-white shadow";
         if (catIn) catIn.value = "Daily Expense";
         if (descIn) descIn.placeholder = "Reason / Description (e.g. Marker Salary, AC Diesel, Tea/Canteen)";
+        if (custWrap) custWrap.classList.add("hidden");
+        if (descLabel) descLabel.textContent = "Description / Reason *";
     } else if (type === "Credit") {
         if (btnCrd) btnCrd.className = "py-2 text-xs font-bold rounded-lg transition bg-emerald-600 text-white shadow";
         if (catIn) catIn.value = "Table Play";
         if (descIn) descIn.placeholder = "Description (e.g. Table Play Counter Sales, Canteen Collection)";
+        if (custWrap) custWrap.classList.add("hidden");
+        if (descLabel) descLabel.textContent = "Description / Counter Reason *";
     } else if (type === "Udhaar") {
         if (btnUdh) btnUdh.className = "py-2 text-xs font-bold rounded-lg transition bg-indigo-600 text-white shadow";
         if (catIn) catIn.value = "Other";
-        if (descIn) descIn.placeholder = "👤 Member Name Who Took Credit (e.g. Ali Raza, Table 3)";
+        if (descIn) descIn.placeholder = "👤 Customer / Member Name (e.g. Chatta, Hamza, Moez)";
+        if (custWrap) custWrap.classList.remove("hidden");
+        if (descLabel) descLabel.textContent = "Or Type Custom Customer Name *";
     } else if (type === "UdhaarReturned") {
         if (btnUdhRet) btnUdhRet.className = "py-2 text-xs font-bold rounded-lg transition bg-purple-600 text-white shadow";
         if (catIn) catIn.value = "Other";
-        if (descIn) descIn.placeholder = "👤 Member Name Who Returned Money (e.g. Ali Raza)";
+        if (descIn) descIn.placeholder = "👤 Customer / Member Name (e.g. Chatta, Hamza, Moez)";
+        if (custWrap) custWrap.classList.remove("hidden");
+        if (descLabel) descLabel.textContent = "Or Type Custom Customer Name *";
+    }
+}
+
+function onManualCustomerSelect(val) {
+    const descIn = document.getElementById("entryDesc");
+    if (!descIn) return;
+    if (val === "__new__") {
+        descIn.value = "";
+        descIn.focus();
+    } else if (val) {
+        descIn.value = val;
     }
 }
 
@@ -302,7 +323,7 @@ async function submitManualEntry(e) {
     }
 
     if ((activeEntryType === "Udhaar" || activeEntryType === "UdhaarReturned") && !desc) {
-        alert("Please enter the Member / Customer Name.");
+        alert("Please select or enter the Customer / Member Name.");
         return;
     }
 
@@ -326,6 +347,9 @@ async function submitManualEntry(e) {
 
         document.getElementById("entryAmount").value = "";
         document.getElementById("entryDesc").value = "";
+        const entryMenu = document.getElementById("entryCustomerSelect");
+        if (entryMenu) entryMenu.value = "";
+
         await refreshDayView();
     } catch (e) {
         alert(e.message);
@@ -348,18 +372,18 @@ async function settleUdhaar(txId, custName) {
 
         if (!res.ok) {
             const err = await res.json();
-            throw new Error(err.detail || "Failed to settle udhaar");
+            throw new Error(err.detail || "Failed to settle transaction");
         }
 
-        alert(`✅ Received Udhaar payment from ${custName} into ${payMethod}!`);
         await refreshDayView();
+        alert(`✅ Settled Udhaar of ${custName} into ${payMethod}!`);
     } catch (e) {
-        alert("Settlement Error: " + e.message);
+        alert(e.message);
     }
 }
 
 // =============================================================================
-// SLIP UPLOAD & DRAG/DROP
+// SLIP & RECEIPT DRAG & DROP / CAMERA UPLOAD
 // =============================================================================
 function setupDropzone() {
     const dropzone = document.getElementById("dropzone");
@@ -399,17 +423,36 @@ function onCustomerSelectChanged(val) {
 }
 
 function populateUploadCustomerSelect() {
-    const menu = document.getElementById("uploadCustomerSelectMenu");
-    if (!menu) return;
-
-    let html = `<option value="">-- None (Bank Receipt) --</option>`;
+    let baseOptions = "";
     if (khataClientsList && khataClientsList.length > 0) {
         khataClientsList.forEach(c => {
-            html += `<option value="${escapeHtml(c.customer_name)}">${escapeHtml(c.customer_name)} (PKR ${c.pending_balance.toLocaleString()} pending)</option>`;
+            baseOptions += `<option value="${escapeHtml(c.customer_name)}">${escapeHtml(c.customer_name)} (PKR ${c.pending_balance.toLocaleString()} pending)</option>`;
         });
     }
-    html += `<option value="__new__">➕ Enter New Customer...</option>`;
-    menu.innerHTML = html;
+
+    // 1. Slip uploader customer menu
+    const uploadMenu = document.getElementById("uploadCustomerSelectMenu");
+    if (uploadMenu) {
+        uploadMenu.innerHTML = `<option value="">-- None (Bank Receipt) --</option>` + baseOptions + `<option value="__new__">➕ Enter New Customer...</option>`;
+    }
+
+    // 2. Manual Counter Entry customer menu
+    const entryMenu = document.getElementById("entryCustomerSelect");
+    if (entryMenu) {
+        entryMenu.innerHTML = `<option value="">-- Select Customer from List (${khataClientsList.length} accounts) --</option>` + baseOptions + `<option value="__new__">➕ Enter New Customer...</option>`;
+    }
+
+    // 3. Direct Modal menu
+    const directMenu = document.getElementById("directUdhaarCustomerSelect");
+    if (directMenu) {
+        directMenu.innerHTML = `<option value="">-- Select Customer --</option>` + baseOptions + `<option value="__new__">➕ Enter New Customer...</option>`;
+    }
+
+    // 4. Autocomplete Datalist
+    const dl = document.getElementById("khataCustomerDatalist");
+    if (dl && khataClientsList) {
+        dl.innerHTML = khataClientsList.map(c => `<option value="${escapeHtml(c.customer_name)}">PKR ${c.pending_balance.toLocaleString()} pending</option>`).join("");
+    }
 }
 
 async function handleFileSelect(files) {
