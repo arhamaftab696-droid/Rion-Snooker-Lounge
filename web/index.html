@@ -114,9 +114,12 @@
       </nav>
 
       <!-- Quick Export & Status -->
-      <div class="flex items-center space-x-2.5">
-        <button onclick="downloadRionCSV()" class="bg-emerald-600 hover:bg-emerald-500 active:scale-95 transition-all text-white text-xs font-semibold px-3 py-2 rounded-lg shadow-md flex items-center gap-1.5 border border-emerald-400/30">
-          <i data-lucide="download" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Export</span> CSV
+      <div class="flex items-center space-x-2">
+        <button onclick="downloadRionExcel()" title="Export Formatted Excel Spreadsheet" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 transition-all text-white text-xs font-bold px-3 py-2 rounded-lg shadow-md flex items-center gap-1.5 border border-emerald-400/30">
+          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Export</span> Excel
+        </button>
+        <button onclick="downloadRionCSV()" title="Export CSV" class="bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all text-slate-300 hover:text-white text-xs font-semibold px-2.5 py-2 rounded-lg shadow flex items-center gap-1 border border-slate-700">
+          <i data-lucide="download" class="w-3.5 h-3.5"></i> CSV
         </button>
         <button onclick="handleWebLogout()" title="Lock Software" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-rose-400 border border-slate-700 text-xs font-semibold px-2.5 py-2 rounded-lg transition flex items-center gap-1">
           <i data-lucide="lock" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Lock</span>
@@ -490,8 +493,11 @@
           <select id="monthlySelectMonth" onchange="loadMonthlyClosing(this.value)" class="bg-slate-800 border border-slate-700 text-white font-bold text-xs rounded-xl px-3.5 py-2 focus:outline-none focus:border-brand-500">
             <option value="2026-08">August 2026</option>
           </select>
-          <button onclick="exportSelectedMonthCSV()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-4 py-2 rounded-xl shadow flex items-center gap-1.5 transition">
-            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Download CSV
+          <button onclick="exportSelectedMonthExcel()" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow flex items-center gap-1.5 transition">
+            <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> Download Excel (.xlsx)
+          </button>
+          <button onclick="exportSelectedMonthCSV()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs px-3 py-2 rounded-xl shadow flex items-center gap-1.5 transition border border-slate-700">
+            <i data-lucide="download" class="w-4 h-4"></i> CSV
           </button>
         </div>
       </div>

@@ -1073,17 +1073,21 @@ class TransactionApp(ctk.CTk):
     def _export_monthly_closing_csv(self):
         sel_m = self.monthly_menu.get() if hasattr(self, "monthly_menu") else None
         export_path = filedialog.asksaveasfilename(
-            title="Export Monthly Closing CSV",
-            defaultextension=".csv",
-            filetypes=[("CSV Files", "*.csv")],
-            initialfile=f"Rion_Monthly_Closing_{sel_m or 'Report'}.csv"
+            title="Export Monthly Closing (Excel or CSV)",
+            defaultextension=".xlsx",
+            filetypes=[("Excel Spreadsheet (.xlsx)", "*.xlsx"), ("CSV Files (.csv)", "*.csv")],
+            initialfile=f"Rion_Monthly_Closing_{sel_m or 'Report'}.xlsx"
         )
         if not export_path:
             return
 
-        cnt = db.export_rion_template_csv(export_path, month_year=sel_m)
+        if export_path.endswith(".csv"):
+            cnt = db.export_rion_template_csv(export_path, month_year=sel_m)
+        else:
+            cnt = db.export_rion_template_xlsx(export_path, month_year=sel_m)
+
         if cnt > 0:
-            messagebox.showinfo("Export Successful", f"Successfully exported {cnt} closing days for {sel_m} to:\\n{export_path}")
+            messagebox.showinfo("Export Successful", f"Successfully exported {cnt} closing days for {sel_m} to:\n{export_path}")
         else:
             messagebox.showwarning("Export Empty", f"No closing records found for {sel_m}.")
 
@@ -2340,20 +2344,24 @@ class TransactionApp(ctk.CTk):
 
     def _export_all_closings_action(self):
         filepath = filedialog.asksaveasfilename(
-            defaultextension=".csv",
-            filetypes=[("CSV Files", "*.csv")],
-            initialfile=f"Expense_Detail_Month_{datetime.now().strftime('%B_%Y')}.csv",
-            title="Export Closing Summary (Rion Month Template)"
+            defaultextension=".xlsx",
+            filetypes=[("Excel Spreadsheet (.xlsx)", "*.xlsx"), ("CSV Files (.csv)", "*.csv")],
+            initialfile=f"Rion_All_Financial_Closings_{datetime.now().strftime('%B_%Y')}.xlsx",
+            title="Export Closing Summary (Excel or CSV)"
         )
         if not filepath:
             return
 
-        count = db.export_rion_template_csv(filepath)
+        if filepath.endswith(".csv"):
+            count = db.export_rion_template_csv(filepath)
+        else:
+            count = db.export_rion_template_xlsx(filepath)
+
         if count == 0:
             messagebox.showinfo("Export", "No daily closing records found to export.")
             return
 
-        messagebox.showinfo("Export Successful", f"Exported {count} daily closing rows in Rion template format to:\n{filepath}")
+        messagebox.showinfo("Export Successful", f"Exported {count} daily closing rows with colors and formatting to:\n{filepath}")
 
     # =========================================================================
     # 3. UPLOAD & SCAN TAB

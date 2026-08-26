@@ -969,6 +969,8 @@ async function loadMonthlyClosing(monthStr) {
     } catch (e) {
         if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-400">${e.message}</td></tr>`;
     }
+function exportSelectedMonthExcel() {
+    window.location.href = `/api/export-excel?month_year=${encodeURIComponent(activeSelectedMonth)}`;
 }
 
 function exportSelectedMonthCSV() {
@@ -1940,4 +1942,12 @@ function escapeHtml(str) {
         .replace(/>/g, "&gt;")
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
+}
+
+function downloadRionExcel() {
+    window.location.href = "/api/export-excel";
+}
+
+function downloadRionCSV() {
+    window.location.href = "/api/export-csv";
 }

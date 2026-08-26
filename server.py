@@ -589,10 +589,27 @@ def delete_transaction(tx_id: int):
     return {"success": True, "message": f"Deleted transaction #{tx_id}"}
 
 
+@app.get("/api/export-excel")
+def export_excel(month_year: Optional[str] = Query(None)):
+    now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
+    export_filename = f"Rion_Financial_Closing_{month_year or datetime.now().strftime('%B_%Y')}_{now_str}.xlsx"
+    temp_path = os.path.join(BASE_DIR, export_filename)
+
+    count = db.export_rion_template_xlsx(temp_path, month_year=month_year)
+    if count == 0:
+        raise HTTPException(status_code=404, detail="No closing records found to export.")
+
+    return FileResponse(
+        temp_path,
+        filename=export_filename,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+
 @app.get("/api/export-csv")
 def export_csv(month_year: Optional[str] = Query(None)):
     now_str = datetime.now().strftime("%Y%m%d_%H%M%S")
-    export_filename = f"Expense_Detail_Month_{month_year or datetime.now().strftime('%B_%Y')}_{now_str}.csv"
+    export_filename = f"Rion_Financial_Closing_{month_year or datetime.now().strftime('%B_%Y')}_{now_str}.csv"
     temp_path = os.path.join(BASE_DIR, export_filename)
 
     count = db.export_rion_template_csv(temp_path, month_year=month_year)

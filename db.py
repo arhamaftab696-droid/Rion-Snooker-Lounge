@@ -724,24 +724,12 @@ def export_to_csv(filepath: str, db_path: str = DB_FILE) -> int:
     return len(txs)
 
 
-def export_rion_template_csv(filepath: str, month_year: Optional[str] = None, db_path: str = DB_FILE) -> int:
-    """
-    Export closing data formatted exactly according to the Rion data.xlsx May sheet template:
-    Row 1: Expense Detail Month of <Month-Year>
-    Row 2: (empty)
-    Row 3: DATE, CASH, BANK, TOTAL, EXPENSE BANK, REASON, EXPENSE CASH, DAILY EXPENSE, NET BALANCE
-    ... data rows sorted chronologically by DATE ...
-    Bottom row: Totals / Summary
-    """
+def _get_daily_rows_for_export(month_year: Optional[str] = None, db_path: str = DB_FILE):
     init_db(db_path)
     conn = get_connection(db_path)
     cursor = conn.cursor()
 
-    query = """
-        SELECT DISTINCT date 
-        FROM transactions 
-        WHERE 1=1
-    """
+    query = "SELECT DISTINCT date FROM transactions WHERE 1=1"
     params = []
     if month_year:
         query += " AND date LIKE ?"
@@ -753,90 +741,341 @@ def export_rion_template_csv(filepath: str, month_year: Optional[str] = None, db
 
     if not dates:
         conn.close()
-        return 0
+        return [], {}, month_year or "CLOSING"
 
     try:
-        title_month = month_year if month_year else (datetime.strptime(dates[0], "%Y-%m-%d").strftime("%B-%Y") if dates else "ALL")
+        title_month = month_year if month_year else (datetime.strptime(dates[0], "%Y-%m-%d").strftime("%B %Y") if dates else "ALL")
     except Exception:
         title_month = month_year or "CLOSING"
 
-    rows_to_write = []
+    rows = []
+    tot_day_credit = 0.0
     tot_cash = 0.0
     tot_bank = 0.0
-    tot_total = 0.0
-    tot_exp_cash = 0.0
+    tot_udhaar_ret = 0.0
+    tot_exp = 0.0
+    tot_udhaar_given = 0.0
     tot_net = 0.0
 
     for d_val in dates:
-        # 1. Cash Credit (Manual Cash In)
+        # 1. Cash Sales (Counter Cash / Table Play)
         cursor.execute("""
             SELECT COALESCE(SUM(total_amount), 0.0) 
             FROM transactions 
-            WHERE date = ? AND tx_type = 'Credit' AND (payment_method LIKE '%Cash%' OR category LIKE '%Cash%')
+            WHERE date = ? AND tx_type = 'Credit' AND (payment_method LIKE '%Cash%' OR category LIKE '%Cash%' OR category = 'Table Play' OR category = 'Counter Cash')
         """, (d_val,))
-        cash_crd = cursor.fetchone()[0] or 0.0
+        cash_sales = cursor.fetchone()[0] or 0.0
 
-        # 2. Bank Credit (Bank Receipts In)
+        # 2. Bank Receipts
         cursor.execute("""
             SELECT COALESCE(SUM(total_amount), 0.0) 
             FROM transactions 
             WHERE date = ? AND tx_type = 'Credit' AND (payment_method NOT LIKE '%Cash%' AND category NOT LIKE '%Cash%')
         """, (d_val,))
-        bank_crd = cursor.fetchone()[0] or 0.0
+        bank_receipts = cursor.fetchone()[0] or 0.0
 
-        day_total_crd = cash_crd + bank_crd
+        # 3. Udhaar Returned / Recovery
+        cursor.execute("""
+            SELECT COALESCE(SUM(total_amount), 0.0) 
+            FROM transactions 
+            WHERE date = ? AND (tx_type = 'Udhaar Recovery' OR category = 'Udhaar Recovery')
+        """, (d_val,))
+        udhaar_ret = cursor.fetchone()[0] or 0.0
 
-        # 3. Expense Cash (Manual Expenses)
+        # Total Day Credit (Total Revenue)
+        day_credit = cash_sales + bank_receipts + udhaar_ret
+
+        # 4. Total Expenses
         cursor.execute("""
             SELECT COALESCE(SUM(total_amount), 0.0) 
             FROM transactions 
             WHERE date = ? AND tx_type = 'Expense'
         """, (d_val,))
-        exp_cash = cursor.fetchone()[0] or 0.0
+        total_exp = cursor.fetchone()[0] or 0.0
 
-        day_net = day_total_crd - exp_cash
+        # 5. Expense Details / Reasons
+        cursor.execute("""
+            SELECT merchant, total_amount, notes 
+            FROM transactions 
+            WHERE date = ? AND tx_type = 'Expense'
+            ORDER BY id ASC
+        """, (d_val,))
+        exp_items = cursor.fetchall()
+        exp_reasons = []
+        for item in exp_items:
+            m = item["merchant"]
+            a = item["total_amount"]
+            if a > 0:
+                exp_reasons.append(f"{m} ({a:,.0f})")
+            else:
+                exp_reasons.append(m)
+        exp_details_str = ", ".join(exp_reasons) if exp_reasons else "-"
 
-        tot_cash += cash_crd
-        tot_bank += bank_crd
-        tot_total += day_total_crd
-        tot_exp_cash += exp_cash
-        tot_net += day_net
+        # 6. Udhaar Given
+        cursor.execute("""
+            SELECT COALESCE(SUM(total_amount), 0.0) 
+            FROM transactions 
+            WHERE date = ? AND tx_type = 'Udhaar'
+        """, (d_val,))
+        udhaar_given = cursor.fetchone()[0] or 0.0
 
-        rows_to_write.append([
-            d_val,
-            round(cash_crd, 2) if cash_crd else "",
-            round(bank_crd, 2) if bank_crd else "",
-            round(day_total_crd, 2) if day_total_crd else "",
-            round(exp_cash, 2) if exp_cash else "",
-            round(day_net, 2)
-        ])
+        # 7. Net Closing Balance
+        net_balance = day_credit - total_exp
+
+        tot_day_credit += day_credit
+        tot_cash += cash_sales
+        tot_bank += bank_receipts
+        tot_udhaar_ret += udhaar_ret
+        tot_exp += total_exp
+        tot_udhaar_given += udhaar_given
+        tot_net += net_balance
+
+        rows.append({
+            "date": d_val,
+            "day_credit": day_credit,
+            "cash_sales": cash_sales,
+            "bank_receipts": bank_receipts,
+            "udhaar_returned": udhaar_ret,
+            "total_expense": total_exp,
+            "expense_details": exp_details_str,
+            "udhaar_given": udhaar_given,
+            "net_balance": net_balance
+        })
 
     conn.close()
+
+    totals = {
+        "day_credit": tot_day_credit,
+        "cash_sales": tot_cash,
+        "bank_receipts": tot_bank,
+        "udhaar_returned": tot_udhaar_ret,
+        "total_expense": tot_exp,
+        "udhaar_given": tot_udhaar_given,
+        "net_balance": tot_net
+    }
+
+    return rows, totals, title_month
+
+
+def export_rion_template_xlsx(filepath: str, month_year: Optional[str] = None, db_path: str = DB_FILE) -> int:
+    """
+    Export professionally formatted, color-coded, auto-sized Excel Spreadsheet (.xlsx).
+    """
+    import openpyxl
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    from openpyxl.utils import get_column_letter
+
+    rows, totals, title_month = _get_daily_rows_for_export(month_year, db_path=db_path)
+    if not rows:
+        return 0
+
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Financial Closing"
+
+    # Title Block (Deep Emerald)
+    ws.merge_cells("A1:I1")
+    title_cell = ws["A1"]
+    title_cell.value = "🎱 RION SNOOKER LOUNGE - FINANCIAL CLOSING STATEMENT"
+    title_cell.font = Font(name="Arial", size=15, bold=True, color="FFFFFF")
+    title_cell.fill = PatternFill(start_color="064E3B", end_color="064E3B", fill_type="solid")
+    title_cell.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[1].height = 36
+
+    # Subtitle (Dark Slate with Gold text)
+    ws.merge_cells("A2:I2")
+    sub_cell = ws["A2"]
+    sub_cell.value = f"Month / Statement: {title_month.upper()} | Generated: {datetime.now().strftime('%Y-%m-%d %I:%M %p')}"
+    sub_cell.font = Font(name="Arial", size=10, bold=True, color="FBBF24")
+    sub_cell.fill = PatternFill(start_color="1E293B", end_color="1E293B", fill_type="solid")
+    sub_cell.alignment = Alignment(horizontal="center", vertical="center")
+    ws.row_dimensions[2].height = 22
+
+    ws.row_dimensions[3].height = 10
+
+    # Headers definition
+    headers = [
+        ("DATE", "1E293B", 14),
+        ("DAY CREDIT (INCOME)", "065F46", 24),
+        ("CASH SALES", "047857", 18),
+        ("BANK RECEIPTS", "4338CA", 18),
+        ("UDHAAR RECOVERED", "6D28D9", 20),
+        ("TOTAL EXPENSE", "9F1239", 20),
+        ("EXPENSE DETAILS / REASONS", "334155", 38),
+        ("UDHAAR GIVEN", "B45309", 18),
+        ("NET BALANCE", "0F766E", 20)
+    ]
+
+    header_font = Font(name="Arial", size=10, bold=True, color="FFFFFF")
+    thin_border = Border(
+        left=Side(style='thin', color='CBD5E1'),
+        right=Side(style='thin', color='CBD5E1'),
+        top=Side(style='thin', color='CBD5E1'),
+        bottom=Side(style='thin', color='CBD5E1')
+    )
+
+    ws.row_dimensions[4].height = 30
+    for col_idx, (header_text, bg_color, min_w) in enumerate(headers, start=1):
+        cell = ws.cell(row=4, column=col_idx, value=header_text)
+        cell.font = header_font
+        cell.fill = PatternFill(start_color=bg_color, end_color=bg_color, fill_type="solid")
+        cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+        cell.border = thin_border
+        col_letter = get_column_letter(col_idx)
+        ws.column_dimensions[col_letter].width = min_w
+
+    # Data Rows
+    data_font = Font(name="Arial", size=10)
+    bold_font = Font(name="Arial", size=10, bold=True)
+    num_format = "#,##0.00"
+
+    credit_fill = PatternFill(start_color="ECFDF5", end_color="ECFDF5", fill_type="solid")
+    expense_fill = PatternFill(start_color="FFF1F2", end_color="FFF1F2", fill_type="solid")
+    net_fill = PatternFill(start_color="F0FDFA", end_color="F0FDFA", fill_type="solid")
+    zebra_fill = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
+
+    start_row = 5
+    for idx, r in enumerate(rows):
+        current_row = start_row + idx
+        ws.row_dimensions[current_row].height = 22
+
+        row_vals = [
+            r["date"],
+            r["day_credit"],
+            r["cash_sales"],
+            r["bank_receipts"],
+            r["udhaar_returned"],
+            r["total_expense"],
+            r["expense_details"],
+            r["udhaar_given"],
+            r["net_balance"]
+        ]
+
+        for col_idx, val in enumerate(row_vals, start=1):
+            cell = ws.cell(row=current_row, column=col_idx, value=val)
+            cell.font = data_font
+            cell.border = thin_border
+
+            # Alignments & Formats
+            if col_idx == 1:  # Date
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                if idx % 2 == 1:
+                    cell.fill = zebra_fill
+            elif col_idx == 7:  # Expense Details
+                cell.alignment = Alignment(horizontal="left", vertical="center")
+                if idx % 2 == 1:
+                    cell.fill = zebra_fill
+            else:  # Numeric columns
+                cell.number_format = num_format
+                cell.alignment = Alignment(horizontal="right", vertical="center")
+                if col_idx == 2:  # Day credit
+                    cell.fill = credit_fill
+                    cell.font = bold_font
+                elif col_idx == 6:  # Total expense
+                    cell.fill = expense_fill
+                    cell.font = bold_font
+                elif col_idx == 9:  # Net balance
+                    cell.fill = net_fill
+                    cell.font = bold_font
+                elif idx % 2 == 1:
+                    cell.fill = zebra_fill
+
+    # Grand Totals Row
+    tot_row_idx = start_row + len(rows)
+    ws.row_dimensions[tot_row_idx].height = 28
+
+    double_bottom_border = Border(
+        left=Side(style='thin', color='94A3B8'),
+        right=Side(style='thin', color='94A3B8'),
+        top=Side(style='thin', color='94A3B8'),
+        bottom=Side(style='double', color='0F172A')
+    )
+    tot_font = Font(name="Arial", size=11, bold=True, color="0F172A")
+    tot_fill = PatternFill(start_color="E2E8F0", end_color="E2E8F0", fill_type="solid")
+
+    tot_vals = [
+        "GRAND TOTAL",
+        totals["day_credit"],
+        totals["cash_sales"],
+        totals["bank_receipts"],
+        totals["udhaar_returned"],
+        totals["total_expense"],
+        "",
+        totals["udhaar_given"],
+        totals["net_balance"]
+    ]
+
+    for col_idx, val in enumerate(tot_vals, start=1):
+        cell = ws.cell(row=tot_row_idx, column=col_idx, value=val)
+        cell.font = tot_font
+        cell.fill = tot_fill
+        cell.border = double_bottom_border
+
+        if col_idx == 1:
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+        elif col_idx == 7:
+            cell.alignment = Alignment(horizontal="center", vertical="center")
+        else:
+            cell.number_format = num_format
+            cell.alignment = Alignment(horizontal="right", vertical="center")
+
+    wb.save(filepath)
+    return len(rows)
+
+
+def export_rion_template_csv(filepath: str, month_year: Optional[str] = None, db_path: str = DB_FILE) -> int:
+    """
+    Export closing data formatted with explicit Day Credit and Total Expense columns.
+    """
+    rows, totals, title_month = _get_daily_rows_for_export(month_year, db_path=db_path)
+    if not rows:
+        return 0
 
     with open(filepath, mode="w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         # Row 1: Header title
-        writer.writerow([f"Expense Detail Month of {title_month.upper()}"])
+        writer.writerow([f"RION SNOOKER LOUNGE - Financial Closing Statement ({title_month.upper()})"])
         # Row 2: Empty
         writer.writerow([])
-        # Row 3: Column headers (Removed Reason, Daily Expense, Expense Bank)
+        # Row 3: Column headers
         writer.writerow([
-            "DATE", "CASH", "BANK", "TOTAL", "EXPENSE CASH", "NET BALANCE"
+            "DATE",
+            "DAY CREDIT (INCOME)",
+            "CASH SALES",
+            "BANK RECEIPTS",
+            "UDHAAR RECOVERED",
+            "TOTAL EXPENSE",
+            "EXPENSE DETAILS / REASONS",
+            "UDHAAR GIVEN",
+            "NET BALANCE"
         ])
         # Data rows
-        for r in rows_to_write:
-            writer.writerow(r)
+        for r in rows:
+            writer.writerow([
+                r["date"],
+                round(r["day_credit"], 2),
+                round(r["cash_sales"], 2),
+                round(r["bank_receipts"], 2),
+                round(r["udhaar_returned"], 2),
+                round(r["total_expense"], 2),
+                r["expense_details"],
+                round(r["udhaar_given"], 2),
+                round(r["net_balance"], 2)
+            ])
         # Summary Row
         writer.writerow([
-            "TOTAL",
-            round(tot_cash, 2),
-            round(tot_bank, 2),
-            round(tot_total, 2),
-            round(tot_exp_cash, 2),
-            round(tot_net, 2)
+            "GRAND TOTAL",
+            round(totals["day_credit"], 2),
+            round(totals["cash_sales"], 2),
+            round(totals["bank_receipts"], 2),
+            round(totals["udhaar_returned"], 2),
+            round(totals["total_expense"], 2),
+            "",
+            round(totals["udhaar_given"], 2),
+            round(totals["net_balance"], 2)
         ])
 
-    return len(rows_to_write)
+    return len(rows)
 
 
 def get_khata_customers_summary(db_path: str = DB_FILE) -> Dict[str, Any]:
