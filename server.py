@@ -588,6 +588,10 @@ Please provide a helpful, polite, concise, and accurate financial response tailo
         return {"reply": f"Assistant Error: {str(e)}"}
 
 
+@app.get("/healthz")
+def health_check():
+    return {"status": "ok", "app": "Rion Snooker Lounge"}
+
 # Static Assets & Index
 @app.get("/", response_class=HTMLResponse)
 @app.head("/", response_class=HTMLResponse)
@@ -602,7 +606,8 @@ app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
 
 def main():
     import uvicorn
-    uvicorn.run("server:app", host="0.0.0.0", port=8000, reload=False)
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("server:app", host="0.0.0.0", port=port, reload=False)
 
 if __name__ == "__main__":
     main()
