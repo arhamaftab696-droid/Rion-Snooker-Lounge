@@ -245,10 +245,32 @@ class CashEntryDialog(ctk.CTkToplevel):
             form,
             values=["🔴 Expense", "🟢 Cash In", "🔵 Udhaar Given", "🟣 Udhaar Returned"],
             selected_color=("#0284c7", "#0284c7"),
+            command=self._on_type_changed,
             height=34
         )
         self.type_segmented.set("🔴 Expense")
         self.type_segmented.pack(fill="x", padx=16, pady=(0, 6))
+
+        # Slide-Down Customer Selection Dropdown (For Udhaar)
+        self.customer_frame = ctk.CTkFrame(form, fg_color=("gray85", "gray20"), corner_radius=8)
+        
+        c_lbl = ctk.CTkLabel(self.customer_frame, text="👤 Select Customer from List:", font=ctk.CTkFont(size=12, weight="bold"), text_color=("#4f46e5", "#818cf8"))
+        c_lbl.pack(anchor="w", padx=12, pady=(8, 2))
+
+        # Get customers from db
+        cust_summary = db.get_khata_customers_summary()
+        self.customer_names = [c["customer_name"] for c in cust_summary.get("clients", [])]
+        combo_vals = ["-- Select Customer from List --"] + self.customer_names + ["➕ Enter New Customer..."]
+
+        self.customer_combo = ctk.CTkComboBox(
+            self.customer_frame,
+            values=combo_vals,
+            command=self._on_customer_selected,
+            height=34,
+            font=ctk.CTkFont(size=12, weight="bold")
+        )
+        self.customer_combo.set("-- Select Customer from List --")
+        self.customer_combo.pack(fill="x", padx=12, pady=(0, 8))
 
         # 3. Cash Amount (Prominent)
         ctk.CTkLabel(form, text=f"Amount ({self.currency}): *", font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w", padx=16, pady=(4, 2))
@@ -257,9 +279,9 @@ class CashEntryDialog(ctk.CTkToplevel):
         self.amount_entry.focus_set()
 
         # 4. Description / Title / Customer Name
-        ctk.CTkLabel(form, text="Customer Name / Description / Reason:", font=ctk.CTkFont(size=12, weight="bold")).pack(anchor="w", padx=16, pady=(4, 2))
-        self.desc_entry = ctk.CTkEntry(form, height=32, placeholder_text="Customer Name (if Udhaar) or Description")
-        self.desc_entry.insert(0, "Cash Collection")
+        self.desc_label = ctk.CTkLabel(form, text="Description / Reason:", font=ctk.CTkFont(size=12, weight="bold"))
+        self.desc_label.pack(anchor="w", padx=16, pady=(4, 2))
+        self.desc_entry = ctk.CTkEntry(form, height=32, placeholder_text="e.g. Marker Salary, Generator Diesel")
         self.desc_entry.pack(fill="x", padx=16, pady=(0, 6))
 
         # 5. Category & Payment Method Split
@@ -277,7 +299,7 @@ class CashEntryDialog(ctk.CTkToplevel):
             values=["Table Play", "Canteen & Cafe", "Snooker Accessories", "Counter Cash", "Marker & Staff Salary", "Electricity & AC Fuel", "Table Cloth & Repair", "Member Udhaar", "Udhaar Recovery", "Daily Expense", "Other"],
             height=32
         )
-        self.cat_menu.set("Table Play")
+        self.cat_menu.set("Daily Expense")
         self.cat_menu.pack(fill="x")
 
         # Payment Method
@@ -325,6 +347,39 @@ class CashEntryDialog(ctk.CTkToplevel):
         # Bind Return key to save
         self.amount_entry.bind("<Return>", lambda e: self._save_entry())
         self.desc_entry.bind("<Return>", lambda e: self._save_entry())
+
+    def _on_type_changed(self, value):
+        if "Udhaar" in value:
+            self.customer_frame.pack(fill="x", padx=16, pady=(0, 6), before=self.desc_label)
+            self.desc_label.configure(text="👤 Customer Name / Note:")
+            if not self.desc_entry.get().strip() or self.desc_entry.get().strip() in ["Cash Collection", "Daily Expense", "Table Play"]:
+                self.desc_entry.delete(0, "end")
+            self.desc_entry.configure(placeholder_text="Customer Name (e.g. Chatta, Hamza, Moez)")
+            if "Returned" in value:
+                self.cat_menu.set("Udhaar Recovery")
+                self.pay_menu.set("Cash")
+            else:
+                self.cat_menu.set("Member Udhaar")
+                self.pay_menu.set("Udhaar")
+        else:
+            self.customer_frame.pack_forget()
+            self.desc_label.configure(text="Description / Reason:")
+            if "Expense" in value:
+                self.cat_menu.set("Daily Expense")
+                self.pay_menu.set("Cash")
+                self.desc_entry.configure(placeholder_text="Reason (e.g. Marker Salary, Generator Diesel)")
+            elif "Credit" in value or "Cash In" in value:
+                self.cat_menu.set("Table Play")
+                self.pay_menu.set("Cash")
+                self.desc_entry.configure(placeholder_text="Counter Sales / Frame Collection")
+
+    def _on_customer_selected(self, choice):
+        if choice == "➕ Enter New Customer..." or choice == "-- Select Customer from List --":
+            self.desc_entry.delete(0, "end")
+            self.desc_entry.focus_set()
+        elif choice:
+            self.desc_entry.delete(0, "end")
+            self.desc_entry.insert(0, choice)
 
     def _pick_date(self):
         cur = self.date_entry.get().strip() or datetime.now().strftime("%Y-%m-%d")
@@ -3586,11 +3641,18 @@ class TransactionApp(ctk.CTk):
             return
 
         try:
-            import urllib.request
-            req = urllib.request.Request(f"{cloud_url}/api/backup/download-db", headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=20) as res:
-                content = res.read()
-                
+            import requests
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+            res = requests.get(f"{cloud_url}/api/backup/download-db", timeout=30, verify=False)
+            if res.status_code != 200:
+                raise Exception(f"Server returned status {res.status_code}: {res.text}")
+
+            content = res.content
+            if len(content) < 100:
+                raise Exception("Downloaded database is empty or invalid.")
+
             db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transactions.db")
             temp_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transactions_temp.db")
             with open(temp_path, "wb") as f:
@@ -3621,10 +3683,13 @@ class TransactionApp(ctk.CTk):
 
         try:
             import requests
+            import urllib3
+            urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
             db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "transactions.db")
             with open(db_path, "rb") as f:
                 files = {"file": ("transactions.db", f, "application/x-sqlite3")}
-                res = requests.post(f"{cloud_url}/api/backup/upload-db", files=files, timeout=30)
+                res = requests.post(f"{cloud_url}/api/backup/upload-db", files=files, timeout=30, verify=False)
 
             if res.status_code == 200:
                 messagebox.showinfo("Upload Success", "✅ Successfully pushed local database to Cloud!")
