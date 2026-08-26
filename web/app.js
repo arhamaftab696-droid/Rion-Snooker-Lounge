@@ -13,12 +13,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     
     await loadSettings();
     await refreshDayView();
-    fetch("/api/khata").then(r => r.json()).then(d => {
-        khataClientsList = d.clients || [];
-        populateUploadCustomerSelect();
-    }).catch(() => {});
+    await fetchAndPopulateCustomers();
     setupDropzone();
 });
+
+async function fetchAndPopulateCustomers() {
+    try {
+        const res = await fetch("/api/khata");
+        if (res.ok) {
+            const data = await res.json();
+            khataClientsList = data.clients || [];
+            populateUploadCustomerSelect();
+            const dl = document.getElementById("khataCustomerDatalist");
+            if (dl && data.clients) {
+                dl.innerHTML = data.clients.map(c => `<option value="${escapeHtml(c.customer_name)}">PKR ${c.pending_balance.toLocaleString()} pending</option>`).join("");
+            }
+        }
+    } catch (e) {
+        console.error("Failed to load customers for upload menu:", e);
+    }
+}
 
 // =============================================================================
 // TAB NAVIGATION
@@ -642,13 +656,14 @@ async function loadKhataSummary() {
 
         khataClientsList = data.clients || [];
         renderKhataTable(khataClientsList);
+        populateUploadCustomerSelect();
 
         const dl = document.getElementById("khataCustomerDatalist");
         if (dl && data.clients) {
             dl.innerHTML = data.clients.map(c => `<option value="${escapeHtml(c.customer_name)}">PKR ${c.pending_balance.toLocaleString()} pending</option>`).join("");
         }
     } catch (e) {
-        if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-rose-400">${e.message}</td></tr>`;
+        if (tbody) tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-rose-400">${e.message}</td></tr>`;
     }
 }
 
