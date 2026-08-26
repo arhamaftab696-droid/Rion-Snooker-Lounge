@@ -581,6 +581,7 @@ def reopen_staff(staff_id: int):
 
 
 @app.delete("/api/transaction/{tx_id}")
+@app.delete("/api/transactions/{tx_id}")
 def delete_transaction(tx_id: int):
     success = db.delete_transaction(tx_id)
     if not success:
