@@ -1,0 +1,316 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A10000012C7F000100000001 /* RionSnookerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000022C7F000100000001 /* RionSnookerApp.swift */; };
+		A10000032C7F000100000001 /* Transaction.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000042C7F000100000001 /* Transaction.swift */; };
+		A10000052C7F000100000001 /* Customer.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000062C7F000100000001 /* Customer.swift */; };
+		A10000072C7F000100000001 /* Staff.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000082C7F000100000001 /* Staff.swift */; };
+		A10000092C7F000100000001 /* DatabaseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000A2C7F000100000001 /* DatabaseManager.swift */; };
+		A100000B2C7F000100000001 /* BiometricAuth.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000C2C7F000100000001 /* BiometricAuth.swift */; };
+		A100000D2C7F000100000001 /* LockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100000E2C7F000100000001 /* LockView.swift */; };
+		A100000F2C7F000100000001 /* MainTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000102C7F000100000001 /* MainTabView.swift */; };
+		A10000112C7F000100000001 /* DailyClosingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000122C7F000100000001 /* DailyClosingView.swift */; };
+		A10000132C7F000100000001 /* CashEntryModal.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000142C7F000100000001 /* CashEntryModal.swift */; };
+		A10000152C7F000100000001 /* KhataView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000162C7F000100000001 /* KhataView.swift */; };
+		A10000172C7F000100000001 /* StaffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000182C7F000100000001 /* StaffView.swift */; };
+		A10000192C7F000100000001 /* MonthlyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001A2C7F000100000001 /* MonthlyView.swift */; };
+		A100001B2C7F000100000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001C2C7F000100000001 /* SettingsView.swift */; };
+		A100001D2C7F000100000001 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = A100001E2C7F000100000001 /* libsqlite3.tbd */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A10000002C7F000100000001 /* RionSnooker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = RionSnooker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000022C7F000100000001 /* RionSnookerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RionSnookerApp.swift; sourceTree = "<group>"; };
+		A10000042C7F000100000001 /* Transaction.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Transaction.swift; sourceTree = "<group>"; };
+		A10000062C7F000100000001 /* Customer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Customer.swift; sourceTree = "<group>"; };
+		A10000082C7F000100000001 /* Staff.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Staff.swift; sourceTree = "<group>"; };
+		A100000A2C7F000100000001 /* DatabaseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DatabaseManager.swift; sourceTree = "<group>"; };
+		A100000C2C7F000100000001 /* BiometricAuth.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BiometricAuth.swift; sourceTree = "<group>"; };
+		A100000E2C7F000100000001 /* LockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LockView.swift; sourceTree = "<group>"; };
+		A10000102C7F000100000001 /* MainTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainTabView.swift; sourceTree = "<group>"; };
+		A10000122C7F000100000001 /* DailyClosingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyClosingView.swift; sourceTree = "<group>"; };
+		A10000142C7F000100000001 /* CashEntryModal.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CashEntryModal.swift; sourceTree = "<group>"; };
+		A10000162C7F000100000001 /* KhataView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KhataView.swift; sourceTree = "<group>"; };
+		A10000182C7F000100000001 /* StaffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffView.swift; sourceTree = "<group>"; };
+		A100001A2C7F000100000001 /* MonthlyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthlyView.swift; sourceTree = "<group>"; };
+		A100001C2C7F000100000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A100001E2C7F000100000001 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
+		A10000202C7F000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A10000212C7F000100000001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A100001D2C7F000100000001 /* libsqlite3.tbd in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A10000222C7F000100000001 = {
+			isa = PBXGroup;
+			children = (
+				A10000232C7F000100000001 /* RionSnookeriOS */,
+				A10000242C7F000100000001 /* Frameworks */,
+				A10000252C7F000100000001 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A10000232C7F000100000001 /* RionSnookeriOS */ = {
+			isa = PBXGroup;
+			children = (
+				A10000022C7F000100000001 /* RionSnookerApp.swift */,
+				A10000262C7F000100000001 /* Models */,
+				A10000272C7F000100000001 /* Services */,
+				A10000282C7F000100000001 /* Views */,
+				A10000202C7F000100000001 /* Info.plist */,
+			);
+			path = .;
+			sourceTree = "<group>";
+		};
+		A10000262C7F000100000001 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				A10000042C7F000100000001 /* Transaction.swift */,
+				A10000062C7F000100000001 /* Customer.swift */,
+				A10000082C7F000100000001 /* Staff.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		A10000272C7F000100000001 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				A100000A2C7F000100000001 /* DatabaseManager.swift */,
+				A100000C2C7F000100000001 /* BiometricAuth.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		A10000282C7F000100000001 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				A100000E2C7F000100000001 /* LockView.swift */,
+				A10000102C7F000100000001 /* MainTabView.swift */,
+				A10000122C7F000100000001 /* DailyClosingView.swift */,
+				A10000142C7F000100000001 /* CashEntryModal.swift */,
+				A10000162C7F000100000001 /* KhataView.swift */,
+				A10000182C7F000100000001 /* StaffView.swift */,
+				A100001A2C7F000100000001 /* MonthlyView.swift */,
+				A100001C2C7F000100000001 /* SettingsView.swift */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		A10000242C7F000100000001 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A100001E2C7F000100000001 /* libsqlite3.tbd */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		A10000252C7F000100000001 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A10000002C7F000100000001 /* RionSnooker.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A10000292C7F000100000001 /* RionSnookeriOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A100002A2C7F000100000001 /* Build configuration list for PBXNativeTarget "RionSnookeriOS" */;
+			buildPhases = (
+				A100002B2C7F000100000001 /* Sources */,
+				A10000212C7F000100000001 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = RionSnookeriOS;
+			productName = RionSnookeriOS;
+			productReference = A10000002C7F000100000001 /* RionSnooker.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A100002C2C7F000100000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					A10000292C7F000100000001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = A100002D2C7F000100000001 /* Build configuration list for PBXProject "RionSnookeriOS" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A10000222C7F000100000001;
+			productRefGroup = A10000252C7F000100000001 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A10000292C7F000100000001 /* RionSnookeriOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A100002B2C7F000100000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A10000012C7F000100000001 /* RionSnookerApp.swift in Sources */,
+				A10000032C7F000100000001 /* Transaction.swift in Sources */,
+				A10000052C7F000100000001 /* Customer.swift in Sources */,
+				A10000072C7F000100000001 /* Staff.swift in Sources */,
+				A10000092C7F000100000001 /* DatabaseManager.swift in Sources */,
+				A100000B2C7F000100000001 /* BiometricAuth.swift in Sources */,
+				A100000D2C7F000100000001 /* LockView.swift in Sources */,
+				A100000F2C7F000100000001 /* MainTabView.swift in Sources */,
+				A10000112C7F000100000001 /* DailyClosingView.swift in Sources */,
+				A10000132C7F000100000001 /* CashEntryModal.swift in Sources */,
+				A10000152C7F000100000001 /* KhataView.swift in Sources */,
+				A10000172C7F000100000001 /* StaffView.swift in Sources */,
+				A10000192C7F000100000001 /* MonthlyView.swift in Sources */,
+				A100001B2C7F000100000001 /* SettingsView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A100002E2C7F000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		A100002F2C7F000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				COPY_PHASE_STRIP = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 16.0;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A10000302C7F000100000001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rion Snooker";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rionsnooker.lounge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A10000312C7F000100000001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Rion Snooker";
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.business";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.rionsnooker.lounge;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A100002D2C7F000100000001 /* Build configuration list for PBXProject "RionSnookeriOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A100002E2C7F000100000001 /* Debug */,
+				A100002F2C7F000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A100002A2C7F000100000001 /* Build configuration list for PBXNativeTarget "RionSnookeriOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A10000302C7F000100000001 /* Debug */,
+				A10000312C7F000100000001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+	};
+	rootObject = A100002C2C7F000100000001 /* Project object */;
+}
