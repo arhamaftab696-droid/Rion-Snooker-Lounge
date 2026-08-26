@@ -87,7 +87,10 @@ async function handleBiometricWebLogin() {
         const savedBioPin = localStorage.getItem("rion_bio_pin");
         if (!savedBioPin) {
             // First-time biometric registration
-            const promptPin = prompt("🔑 Enter your Security PIN (6861) once to link Face ID / Biometrics on this device:");
+            let promptPin = document.getElementById("loginPinInput")?.value.trim();
+            if (!promptPin) {
+                promptPin = prompt("🔑 Enter your Security PIN to link Face ID / Biometrics on this device:");
+            }
             if (!promptPin) return;
 
             // Verify with backend
