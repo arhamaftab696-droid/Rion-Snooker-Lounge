@@ -1,0 +1,17 @@
+#!/bin/bash
+DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
+
+# If launched from Desktop, target the Documents/system directory
+if [[ "$DIR" == *"Desktop"* ]]; then
+    DIR="/Users/arhamaftab/Documents/system"
+fi
+
+cd "$DIR"
+
+# Launch server in background if not running
+if ! pgrep -f "server.py" > /dev/null; then
+    ./venv/bin/python server.py > /tmp/transaction_web.log 2>&1 &
+fi
+
+# Launch Desktop App
+./venv/bin/python app.py > /tmp/transaction_app.log 2>&1
