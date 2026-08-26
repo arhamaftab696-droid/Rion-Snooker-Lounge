@@ -479,13 +479,26 @@ class TransactionApp(ctk.CTk):
 
     def _build_login_screen(self):
         """Displays full-window login / security lock screen."""
+        if hasattr(self, "login_frame") and self.login_frame:
+            try:
+                self.login_frame.destroy()
+            except Exception:
+                pass
+
+        if hasattr(self, "sidebar") and self.sidebar:
+            self.sidebar.grid_forget()
+        if hasattr(self, "content_frames"):
+            for f in self.content_frames.values():
+                f.grid_forget()
+
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=0)
 
         self.login_frame = ctk.CTkFrame(self, fg_color=("gray95", "gray10"), corner_radius=0)
-        self.login_frame.grid(row=0, column=0, sticky="nsew")
+        self.login_frame.grid(row=0, column=0, columnspan=2, sticky="nsew")
         self.login_frame.grid_columnconfigure(0, weight=1)
         self.login_frame.grid_rowconfigure(0, weight=1)
+        self.login_frame.lift()
 
         box = ctk.CTkFrame(self.login_frame, corner_radius=16, fg_color=("gray85", "gray17"), width=380)
         box.grid(row=0, column=0, padx=40, pady=40)
@@ -544,7 +557,9 @@ class TransactionApp(ctk.CTk):
         entered_pin = self.login_pin_entry.get().strip()
         if db.verify_admin_pin(entered_pin):
             self.login_err_label.configure(text="")
-            self.login_frame.grid_forget()
+            if self.login_frame:
+                self.login_frame.destroy()
+                self.login_frame = None
 
             self.grid_columnconfigure(0, weight=0)
             self.grid_columnconfigure(1, weight=1)
@@ -563,10 +578,6 @@ class TransactionApp(ctk.CTk):
 
     def _lock_app(self):
         """Locks the application and displays the login screen."""
-        if self.sidebar:
-            self.sidebar.grid_forget()
-        for f in self.content_frames.values():
-            f.grid_forget()
         self._build_login_screen()
 
     # =========================================================================
