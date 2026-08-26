@@ -743,7 +743,13 @@ async function handleFileSelect(files) {
             let errorText = "Failed to process slip";
             try {
                 const err = await res.json();
-                errorText = err.detail || errorText;
+                if (Array.isArray(err.detail)) {
+                    errorText = err.detail.map(d => d.msg || JSON.stringify(d)).join(", ");
+                } else if (typeof err.detail === "string") {
+                    errorText = err.detail;
+                } else if (err.message) {
+                    errorText = err.message;
+                }
             } catch (_) {
                 errorText = (await res.text()) || errorText;
             }

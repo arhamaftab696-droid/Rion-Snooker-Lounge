@@ -179,32 +179,57 @@ def settle_udhaar(payload: SettleUdhaarRequest):
 
 @app.post("/api/upload-slips")
 async def upload_slips(
-    target_date: str = Form(...),
-    slip_type: str = Form("Bank Receipt"),
-    customer_name: str = Form(""),
-    udhaar_amount: Optional[str] = Form("0"),
-    extras_deducted: Optional[str] = Form("0"),
-    extras_reason: Optional[str] = Form(""),
-    files: List[UploadFile] = File(...)
+    request: Request,
+    target_date: Optional[str] = Form(None),
+    slip_type: Optional[str] = Form(None),
+    customer_name: Optional[str] = Form(None),
+    udhaar_amount: Optional[str] = Form(None),
+    extras_deducted: Optional[str] = Form(None),
+    extras_reason: Optional[str] = Form(None),
+    files: Optional[List[UploadFile]] = File(None)
 ):
-    if not files:
-        raise HTTPException(status_code=400, detail="No files uploaded.")
+    try:
+        form_data = await request.form()
+    except Exception:
+        form_data = {}
+
+    final_target_date = target_date or form_data.get("target_date") or datetime.now().strftime("%Y-%m-%d")
+    final_slip_type = slip_type or form_data.get("slip_type") or "Bank Receipt"
+    final_customer_name = customer_name or form_data.get("customer_name") or ""
+    raw_udhaar = udhaar_amount or form_data.get("udhaar_amount") or "0"
+    raw_extras = extras_deducted or form_data.get("extras_deducted") or "0"
+    safe_extras_reason = extras_reason or form_data.get("extras_reason") or ""
 
     # Parse amounts safely
     try:
-        parsed_udhaar_amount = float(udhaar_amount) if udhaar_amount else 0.0
+        parsed_udhaar_amount = float(str(raw_udhaar).replace(",", ""))
     except Exception:
         parsed_udhaar_amount = 0.0
 
     try:
-        parsed_extras_deducted = float(extras_deducted) if extras_deducted else 0.0
+        parsed_extras_deducted = float(str(raw_extras).replace(",", ""))
     except Exception:
         parsed_extras_deducted = 0.0
 
-    safe_extras_reason = extras_reason or ""
-    safe_customer_name = customer_name or ""
+    safe_customer_name = str(final_customer_name).strip()
 
-    date_dir = os.path.join(RECEIPTS_DIR, target_date)
+    # Collect files safely
+    all_files: List[UploadFile] = []
+    if files:
+        for f in files:
+            if hasattr(f, "filename") and f.filename:
+                all_files.append(f)
+
+    for field_name in ["files", "file", "uploadFiles", "images", "photos"]:
+        if hasattr(form_data, "getlist"):
+            for item in form_data.getlist(field_name):
+                if hasattr(item, "filename") and item.filename and item not in all_files:
+                    all_files.append(item)
+
+    if not all_files:
+        raise HTTPException(status_code=400, detail="No receipt image or file was selected.")
+
+    date_dir = os.path.join(RECEIPTS_DIR, str(final_target_date))
     os.makedirs(date_dir, exist_ok=True)
 
     api_key = db.get_setting("gemini_api_key", os.environ.get("GEMINI_API_KEY", ""))
@@ -212,7 +237,7 @@ async def upload_slips(
 
     saved_items = []
 
-    for file in files:
+    for file in all_files:
         fname = file.filename or f"slip_{int(time.time()*1000)}.jpg"
         dest_path = os.path.join(date_dir, fname)
 
