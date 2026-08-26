@@ -1,17 +1,28 @@
 #!/bin/bash
 DIR="$(cd "$(dirname "$0")/../../.." && pwd)"
 
-# If launched from Desktop, target the Documents/system directory
 if [[ "$DIR" == *"Desktop"* ]]; then
     DIR="/Users/arhamaftab/Documents/system"
 fi
 
 cd "$DIR"
 
-# Launch server in background if not running
-if ! pgrep -f "server.py" > /dev/null; then
-    ./venv/bin/python server.py > /tmp/transaction_web.log 2>&1 &
+# Force native Apple Silicon arm64 execution to avoid Rosetta warnings
+ARCH_CMD=""
+if [[ "$(uname -m)" == "arm64" ]]; then
+    ARCH_CMD="arch -arm64"
 fi
 
-# Launch Desktop App
-./venv/bin/python app.py > /tmp/transaction_app.log 2>&1
+if [ -f "./venv/bin/python" ]; then
+    PY="./venv/bin/python"
+else
+    PY="python3"
+fi
+
+# Run background server if needed
+if ! pgrep -f "server.py" > /dev/null; then
+    $ARCH_CMD $PY server.py > /tmp/transaction_web.log 2>&1 &
+fi
+
+# Run Desktop App
+$ARCH_CMD $PY app.py > /tmp/transaction_app.log 2>&1
