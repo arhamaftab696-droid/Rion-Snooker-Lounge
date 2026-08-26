@@ -72,49 +72,110 @@ async function handleWebLogin(e) {
 
 async function handleBiometricWebLogin() {
     const errEl = document.getElementById("loginErrorMsg");
-    if (window.PublicKeyCredential) {
-        try {
-            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
-            if (available) {
-                const savedPin = localStorage.getItem("rion_bio_pin");
-                if (savedPin) {
-                    const res = await fetch("/api/auth/login", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ pin: savedPin })
-                    });
-                    if (res.ok) {
-                        const data = await res.json();
-                        sessionStorage.setItem("rion_auth_token", data.token || "rion_auth_session_valid");
-                        const overlay = document.getElementById("login-overlay");
-                        if (overlay) overlay.classList.add("hidden");
-                        return;
-                    }
-                }
-            }
-        } catch (_) {}
+    if (!window.PublicKeyCredential) {
+        alert("Face ID / Biometrics is not supported on this browser.");
+        return;
     }
 
-    const promptPin = prompt("🔑 Enter your PIN once to enable Face ID / Biometrics on this device:");
-    if (promptPin) {
-        try {
-            const res = await fetch("/api/auth/login", {
+    try {
+        const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+        if (!available) {
+            alert("Biometrics / Touch ID / Face ID hardware is not available on this device.");
+            return;
+        }
+
+        const savedBioPin = localStorage.getItem("rion_bio_pin");
+        if (!savedBioPin) {
+            // First-time biometric registration
+            const promptPin = prompt("🔑 Enter your Security PIN (6861) once to link Face ID / Biometrics on this device:");
+            if (!promptPin) return;
+
+            // Verify with backend
+            const verifyRes = await fetch("/api/auth/login", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ pin: promptPin })
             });
+            if (!verifyRes.ok) {
+                alert("❌ Invalid PIN. Biometrics not linked.");
+                return;
+            }
+
+            // Register WebAuthn credential (triggers native Face ID / Touch ID enrollment prompt)
+            const challenge = new Uint8Array(32);
+            window.crypto.getRandomValues(challenge);
+            const userId = new Uint8Array(16);
+            window.crypto.getRandomValues(userId);
+
+            const cred = await navigator.credentials.create({
+                publicKey: {
+                    challenge: challenge,
+                    rp: { name: "Rion Snooker Lounge" },
+                    user: {
+                        id: userId,
+                        name: "rion_admin",
+                        displayName: "Rion Administrator"
+                    },
+                    pubKeyCredParams: [
+                        { alg: -7, type: "public-key" },
+                        { alg: -257, type: "public-key" }
+                    ],
+                    authenticatorSelection: {
+                        authenticatorAttachment: "platform",
+                        userVerification: "required"
+                    },
+                    timeout: 60000
+                }
+            });
+
+            if (cred) {
+                localStorage.setItem("rion_bio_pin", promptPin);
+                localStorage.setItem("rion_bio_credential_id", btoa(String.fromCharCode(...new Uint8Array(cred.rawId))));
+                sessionStorage.setItem("rion_auth_token", "rion_auth_session_valid");
+                const overlay = document.getElementById("login-overlay");
+                if (overlay) overlay.classList.add("hidden");
+                alert("✅ Face ID / Biometrics enabled successfully! You can now use it on every login.");
+                return;
+            }
+        }
+
+        // Trigger the real, physical OS biometric scanner (Face ID / Touch ID / Fingerprint)
+        const challenge = new Uint8Array(32);
+        window.crypto.getRandomValues(challenge);
+
+        const assertion = await navigator.credentials.get({
+            publicKey: {
+                challenge: challenge,
+                userVerification: "required",
+                timeout: 60000
+            }
+        });
+
+        if (assertion) {
+            // Biometric physically confirmed! Log in using verified stored PIN
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pin: savedBioPin })
+            });
+
             if (res.ok) {
                 const data = await res.json();
                 sessionStorage.setItem("rion_auth_token", data.token || "rion_auth_session_valid");
-                localStorage.setItem("rion_bio_pin", promptPin);
                 const overlay = document.getElementById("login-overlay");
                 if (overlay) overlay.classList.add("hidden");
-                alert("✅ Face ID / Biometric login enabled for this device!");
+                if (errEl) errEl.classList.add("hidden");
             } else {
-                alert("❌ Invalid PIN.");
+                localStorage.removeItem("rion_bio_pin");
+                localStorage.removeItem("rion_bio_credential_id");
+                alert("The Security PIN was changed. Please log in with the new PIN to re-link biometrics.");
             }
-        } catch (e) {
-            alert("Error: " + e.message);
+        }
+    } catch (e) {
+        console.warn("Biometric scan cancelled or failed:", e);
+        if (errEl) {
+            errEl.textContent = "Biometric scan cancelled or not recognized.";
+            errEl.classList.remove("hidden");
         }
     }
 }
