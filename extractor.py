@@ -17,7 +17,7 @@ from PIL import Image, ImageOps
 import time
 
 DEFAULT_MODEL = "gemini-3-flash-preview"
-MODEL_POOL = ["gemini-3-flash-preview", "gemini-3.1-flash-lite-preview", "gemini-flash-latest"]
+MODEL_POOL = ["gemini-3-flash-preview", "gemini-3.1-flash-lite-preview"]
 
 SYSTEM_PROMPT_EXTRACTION = """You are an expert financial receipt and invoice OCR analysis AI.
 Analyze the provided image of a receipt, invoice, bank transfer screenshot, bill, or transaction slip.
@@ -194,7 +194,7 @@ def extract_transaction_from_image(
         headers = {"Content-Type": "application/json"}
 
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=25)
+            response = requests.post(url, json=payload, headers=headers, timeout=10)
             if response.status_code == 200:
                 data = response.json()
                 text_content = ""

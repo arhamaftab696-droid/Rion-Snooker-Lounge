@@ -688,6 +688,59 @@ function populateUploadCustomerSelect() {
     }
 }
 
+function compressImageFile(file, maxWidth = 1280, quality = 0.82) {
+    return new Promise((resolve) => {
+        if (!file.type || !file.type.startsWith("image/") || file.type === "image/svg+xml") {
+            return resolve(file);
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            const img = new Image();
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth || height > maxWidth) {
+                    if (width > height) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    } else {
+                        width = Math.round((width * maxWidth) / height);
+                        height = maxWidth;
+                    }
+                }
+
+                const canvas = document.createElement("canvas");
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob && blob.size < file.size) {
+                            const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, ".jpg"), {
+                                type: "image/jpeg",
+                                lastModified: Date.now()
+                            });
+                            resolve(compressedFile);
+                        } else {
+                            resolve(file);
+                        }
+                    },
+                    "image/jpeg",
+                    quality
+                );
+            };
+            img.onerror = () => resolve(file);
+            img.src = e.target.result;
+        };
+        reader.onerror = () => resolve(file);
+        reader.readAsDataURL(file);
+    });
+}
+
 async function handleFileSelect(files) {
     if (!files || files.length === 0) return;
 
@@ -716,6 +769,9 @@ async function handleFileSelect(files) {
 
     const dateVal = activeDate || new Date().toISOString().split("T")[0];
 
+    const statusBanner = document.getElementById("uploadStatus");
+    if (statusBanner) statusBanner.classList.remove("hidden");
+
     const formData = new FormData();
     formData.append("target_date", dateVal);
     formData.append("slip_type", slipType);
@@ -725,13 +781,14 @@ async function handleFileSelect(files) {
     formData.append("extras_reason", extrasReason);
 
     for (let i = 0; i < files.length; i++) {
-        const f = files[i];
-        const safeName = f.name || `photo_${Date.now()}_${i}.jpg`;
-        formData.append("files", f, safeName);
+        const rawFile = files[i];
+        let processedFile = rawFile;
+        try {
+            processedFile = await compressImageFile(rawFile);
+        } catch (_) {}
+        const safeName = processedFile.name || `photo_${Date.now()}_${i}.jpg`;
+        formData.append("files", processedFile, safeName);
     }
-
-    const statusBanner = document.getElementById("uploadStatus");
-    if (statusBanner) statusBanner.classList.remove("hidden");
 
     try {
         const res = await fetch("/api/upload-slips", {
