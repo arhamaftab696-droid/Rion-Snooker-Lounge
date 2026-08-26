@@ -424,16 +424,20 @@ async function handleFileSelect(files) {
     const extrasReason = document.getElementById("uploadExtrasReason")?.value.trim() || "";
     const udhaarAmount = parseFloat(document.getElementById("uploadUdhaarAmount")?.value) || 0;
 
+    const dateVal = activeDate || new Date().toISOString().split("T")[0];
+
     const formData = new FormData();
-    formData.append("target_date", activeDate);
+    formData.append("target_date", dateVal);
     formData.append("slip_type", slipType);
     formData.append("customer_name", customerName);
-    formData.append("udhaar_amount", udhaarAmount);
-    formData.append("extras_deducted", extrasDeducted);
+    formData.append("udhaar_amount", String(udhaarAmount));
+    formData.append("extras_deducted", String(extrasDeducted));
     formData.append("extras_reason", extrasReason);
 
     for (let i = 0; i < files.length; i++) {
-        formData.append("files", files[i]);
+        const f = files[i];
+        const safeName = f.name || `photo_${Date.now()}_${i}.jpg`;
+        formData.append("files", f, safeName);
     }
 
     const statusBanner = document.getElementById("uploadStatus");
@@ -446,8 +450,14 @@ async function handleFileSelect(files) {
         });
 
         if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.detail || "Failed to upload slips");
+            let errorText = "Failed to process slip";
+            try {
+                const err = await res.json();
+                errorText = err.detail || errorText;
+            } catch (_) {
+                errorText = (await res.text()) || errorText;
+            }
+            throw new Error(errorText);
         }
 
         // Reset extras & udhaar inputs on success
@@ -461,15 +471,21 @@ async function handleFileSelect(files) {
         await refreshDayView();
         if (slipType === "Udhaar") {
             alert(`✅ Added Udhaar slip to customer '${customerName}'!`);
+        } else {
+            alert("✅ Slip uploaded and processed successfully!");
         }
     } catch (e) {
-        alert("Upload Error: " + e.message);
+        alert("Upload Notice: " + (e.message || String(e)));
     } finally {
         if (statusBanner) statusBanner.classList.add("hidden");
-        const fIn = document.getElementById("slipFileInput");
-        const cIn = document.getElementById("cameraInput");
-        if (fIn) fIn.value = "";
-        if (cIn) cIn.value = "";
+        try {
+            const fIn = document.getElementById("slipFileInput");
+            if (fIn) fIn.value = "";
+        } catch (_) {}
+        try {
+            const cIn = document.getElementById("cameraInput");
+            if (cIn) cIn.value = "";
+        } catch (_) {}
     }
 }
 

@@ -150,19 +150,33 @@ async def upload_slips(
     target_date: str = Form(...),
     slip_type: str = Form("Bank Receipt"),
     customer_name: str = Form(""),
-    udhaar_amount: float = Form(0.0),
-    extras_deducted: float = Form(0.0),
-    extras_reason: str = Form(""),
+    udhaar_amount: Optional[str] = Form("0"),
+    extras_deducted: Optional[str] = Form("0"),
+    extras_reason: Optional[str] = Form(""),
     files: List[UploadFile] = File(...)
 ):
     if not files:
         raise HTTPException(status_code=400, detail="No files uploaded.")
 
+    # Parse amounts safely
+    try:
+        parsed_udhaar_amount = float(udhaar_amount) if udhaar_amount else 0.0
+    except Exception:
+        parsed_udhaar_amount = 0.0
+
+    try:
+        parsed_extras_deducted = float(extras_deducted) if extras_deducted else 0.0
+    except Exception:
+        parsed_extras_deducted = 0.0
+
+    safe_extras_reason = extras_reason or ""
+    safe_customer_name = customer_name or ""
+
     date_dir = os.path.join(RECEIPTS_DIR, target_date)
     os.makedirs(date_dir, exist_ok=True)
 
     api_key = db.get_setting("gemini_api_key", os.environ.get("GEMINI_API_KEY", ""))
-    curr = db.get_setting("currency", "$")
+    curr = db.get_setting("currency", "PKR ")
 
     saved_items = []
 
@@ -184,8 +198,8 @@ async def upload_slips(
             ai_reason = extracted.get("extras_reason", "")
 
             # Apply manual user deduction if provided, otherwise use AI-extracted deduction
-            applied_deduction = extras_deducted if extras_deducted > 0 else ai_extras
-            applied_reason = extras_reason if extras_reason else ai_reason
+            applied_deduction = parsed_extras_deducted if parsed_extras_deducted > 0 else ai_extras
+            applied_reason = safe_extras_reason if safe_extras_reason else ai_reason
 
             if applied_deduction > 0:
                 final_amount = max(0.0, raw_amount - applied_deduction)
@@ -194,16 +208,16 @@ async def upload_slips(
                 final_amount = raw_amount
                 deduction_note = ""
 
-            is_udhaar = slip_type == "Udhaar" or bool(customer_name.strip())
+            is_udhaar = slip_type == "Udhaar" or bool(safe_customer_name.strip())
 
             if is_udhaar:
-                final_merchant = customer_name.strip() or extracted.get("merchant") or "Customer Credit"
+                final_merchant = safe_customer_name.strip() or extracted.get("merchant") or "Customer Credit"
                 final_category = "Customer Credit"
                 final_payment_method = "Credit / Udhaar"
                 final_tx_type = "Udhaar"
-                if udhaar_amount > 0:
-                    final_amount = udhaar_amount
-                    udhaar_note = f"[Udhaar Amount Specified: PKR {udhaar_amount:,.2f}]"
+                if parsed_udhaar_amount > 0:
+                    final_amount = parsed_udhaar_amount
+                    udhaar_note = f"[Udhaar Amount Specified: PKR {parsed_udhaar_amount:,.2f}]"
                     deduction_note = f"{udhaar_note} {deduction_note}".strip()
             else:
                 final_merchant = extracted.get("merchant") or "Bank Transfer Slip"
