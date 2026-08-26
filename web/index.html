@@ -61,6 +61,10 @@
         <button type="submit" id="loginSubmitBtn" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black text-xs py-3 rounded-2xl shadow-lg transition transform active:scale-98 flex items-center justify-center gap-1.5">
           <i data-lucide="unlock" class="w-4 h-4"></i> Unlock Software
         </button>
+
+        <button type="button" id="biometricLoginBtn" onclick="handleBiometricWebLogin()" class="w-full bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/40 font-bold text-xs py-2.5 rounded-2xl transition flex items-center justify-center gap-1.5">
+          <i data-lucide="fingerprint" class="w-4 h-4 text-indigo-400"></i> Unlock with Face ID / Biometrics
+        </button>
       </form>
       <p class="text-[11px] text-slate-500">Default PIN: <span class="text-emerald-400 font-bold">1234</span></p>
     </div>

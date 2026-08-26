@@ -546,12 +546,63 @@ class TransactionApp(ctk.CTk):
             hover_color="#059669",
             command=self._attempt_login
         )
-        unlock_btn.pack(fill="x", padx=28, pady=(0, 12))
+        unlock_btn.pack(fill="x", padx=28, pady=(0, 8))
 
-        ctk.CTkLabel(box, text="Default PIN: 1234 (Change in Settings)", font=ctk.CTkFont(size=11), text_color="gray60").pack(pady=(0, 24))
+        # Touch ID / Apple Biometrics button
+        touchid_bin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "touchid_helper")
+        if os.path.exists(touchid_bin):
+            touch_btn = ctk.CTkButton(
+                box,
+                text="👆 Unlock with Touch ID",
+                font=ctk.CTkFont(size=13, weight="bold"),
+                height=38,
+                fg_color=("#4f46e5", "#6366f1"),
+                hover_color=("#4338ca", "#4f46e5"),
+                command=self._attempt_touchid_login
+            )
+            touch_btn.pack(fill="x", padx=28, pady=(0, 10))
+
+            # Auto-prompt Touch ID on login screen
+            self.after(300, self._attempt_touchid_login)
+
+        ctk.CTkLabel(box, text="Default PIN: 1234 (Change in Settings)", font=ctk.CTkFont(size=11), text_color="gray60").pack(pady=(0, 20))
 
         self.login_pin_entry.bind("<Return>", lambda e: self._attempt_login())
         self.after(200, lambda: self.login_pin_entry.focus_set())
+
+    def _attempt_touchid_login(self):
+        touchid_bin = os.path.join(os.path.dirname(os.path.abspath(__file__)), "touchid_helper")
+        if not os.path.exists(touchid_bin):
+            return
+
+        def worker():
+            try:
+                proc = subprocess.run([touchid_bin], capture_output=True, text=True, timeout=30)
+                if proc.returncode == 0 and "SUCCESS" in proc.stdout:
+                    self.after(0, self._on_biometric_success)
+                elif proc.returncode == 1:
+                    self.after(0, lambda: self.login_err_label.configure(text="Touch ID cancelled or not recognized."))
+            except Exception:
+                pass
+
+        threading.Thread(target=worker, daemon=True).start()
+
+    def _on_biometric_success(self):
+        if self.login_frame:
+            self.login_err_label.configure(text="")
+            self.login_frame.destroy()
+            self.login_frame = None
+
+            self.grid_columnconfigure(0, weight=0)
+            self.grid_columnconfigure(1, weight=1)
+
+            if not self.sidebar:
+                self._build_sidebar()
+                self._build_content_frames()
+                self._show_tab("dashboard")
+            else:
+                self.sidebar.grid(row=0, column=0, sticky="nsew")
+                self._show_tab(self.current_tab or "dashboard")
 
     def _attempt_login(self):
         entered_pin = self.login_pin_entry.get().strip()

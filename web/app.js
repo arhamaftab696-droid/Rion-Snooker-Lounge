@@ -70,6 +70,55 @@ async function handleWebLogin(e) {
     }
 }
 
+async function handleBiometricWebLogin() {
+    const errEl = document.getElementById("loginErrorMsg");
+    if (window.PublicKeyCredential) {
+        try {
+            const available = await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            if (available) {
+                const savedPin = localStorage.getItem("rion_bio_pin");
+                if (savedPin) {
+                    const res = await fetch("/api/auth/login", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ pin: savedPin })
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        sessionStorage.setItem("rion_auth_token", data.token || "rion_auth_session_valid");
+                        const overlay = document.getElementById("login-overlay");
+                        if (overlay) overlay.classList.add("hidden");
+                        return;
+                    }
+                }
+            }
+        } catch (_) {}
+    }
+
+    const promptPin = prompt("🔑 Enter your PIN once to enable Face ID / Biometrics on this device:");
+    if (promptPin) {
+        try {
+            const res = await fetch("/api/auth/login", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ pin: promptPin })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                sessionStorage.setItem("rion_auth_token", data.token || "rion_auth_session_valid");
+                localStorage.setItem("rion_bio_pin", promptPin);
+                const overlay = document.getElementById("login-overlay");
+                if (overlay) overlay.classList.add("hidden");
+                alert("✅ Face ID / Biometric login enabled for this device!");
+            } else {
+                alert("❌ Invalid PIN.");
+            }
+        } catch (e) {
+            alert("Error: " + e.message);
+        }
+    }
+}
+
 function handleWebLogout() {
     sessionStorage.removeItem("rion_auth_token");
     const overlay = document.getElementById("login-overlay");
