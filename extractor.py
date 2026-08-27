@@ -16,8 +16,8 @@ from PIL import Image, ImageOps
 
 import time
 
-DEFAULT_MODEL = "gemini-2.5-flash"
-MODEL_POOL = ["gemini-2.5-flash", "gemini-3.1-flash-lite-preview", "gemini-3-flash-preview"]
+DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
+MODEL_POOL = ["gemini-3.1-flash-lite-preview", "gemini-3-flash-preview"]
 
 SYSTEM_PROMPT_EXTRACTION = """You are an expert financial receipt and invoice OCR analysis AI.
 Analyze the provided image of a receipt, invoice, bank transfer screenshot, bill, or transaction slip.
