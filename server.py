@@ -208,7 +208,8 @@ def upload_slips(
     udhaar_amount: Optional[str] = Form(None),
     extras_deducted: Optional[str] = Form(None),
     extras_reason: Optional[str] = Form(None),
-    files: List[UploadFile] = File(...)
+    files: Optional[List[UploadFile]] = File(default=None),
+    file: Optional[UploadFile] = File(default=None)
 ):
     final_target_date = target_date or datetime.now().strftime("%Y-%m-%d")
     final_slip_type = slip_type or "Bank Receipt"
@@ -225,7 +226,14 @@ def upload_slips(
     except Exception:
         parsed_extras_deducted = 0.0
 
-    all_files = [f for f in files if hasattr(f, "filename") and f.filename]
+    all_files: List[UploadFile] = []
+    if files:
+        for f in files:
+            if hasattr(f, "filename") and f.filename:
+                all_files.append(f)
+    if file and hasattr(file, "filename") and file.filename and file not in all_files:
+        all_files.append(file)
+
     if not all_files:
         raise HTTPException(status_code=400, detail="No receipt image or file was selected.")
 
