@@ -259,6 +259,9 @@ async function fetchAndPopulateCustomers() {
             populateUploadCustomerSelect();
             const dl = document.getElementById("khataCustomerDatalist");
             if (dl && data.clients) {
+                dl.innerHTML = data.clients.map(c => `<option value="${escapeHtml(c.customer_name)}">PKR ${c.pending_balance.toLocaleString()} pending</option>`).join("");
+            }
+        }
     } catch (e) {
         console.error("Failed to load customers for upload menu:", e);
     }
@@ -359,23 +362,26 @@ async function refreshDayView() {
             dateHeader.textContent = dateObj.toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
         }
 
-        const res = await fetch(`/api/daily-closing?date=${activeDate}`);
+        let res = await fetch(`/api/closings/${activeDate}`);
+        if (!res.ok) res = await fetch(`/api/daily-closing?date=${activeDate}`);
         if (!res.ok) throw new Error("Failed to fetch daily closing");
         const data = await res.json();
 
         // Populate Summary Cards
-        const totalCreditAmt = (data.cash_sales || 0) + (data.bank_slips || 0) + (data.udhaar_returned || 0);
-        const expAmt = data.total_expense || 0;
+        const cashSales = data.cash_credit ?? data.cash_sales ?? 0;
+        const bankSlips = data.bank_credit ?? data.bank_slips ?? 0;
+        const udhaarGivenAmt = data.total_udhaar ?? data.udhaar_given ?? 0;
+        const udhaarReturnedAmt = data.total_udhaar_returned ?? data.udhaar_returned ?? 0;
+        const expAmt = data.expense_cash ?? data.total_expense ?? 0;
+        const totalCreditAmt = cashSales + bankSlips + udhaarReturnedAmt;
         const netAmt = totalCreditAmt - expAmt;
-        const udhaarGivenAmt = data.udhaar_given || 0;
-        const udhaarReturnedAmt = data.udhaar_returned || 0;
 
         setElemText("card-total-credit", formatMoney(totalCreditAmt));
-        setElemText("card-cash", formatMoney(data.cash_sales || 0));
-        setElemText("card-cash-count", `${data.cash_count || 0} cash sales`);
+        setElemText("card-cash", formatMoney(cashSales));
+        setElemText("card-cash-count", `${data.credit_count || data.cash_count || 0} cash sales`);
 
-        setElemText("card-bank", formatMoney(data.bank_slips || 0));
-        setElemText("card-bank-count", `${data.bank_count || 0} bank slips`);
+        setElemText("card-bank", formatMoney(bankSlips));
+        setElemText("card-bank-count", `${data.slips_count || data.bank_count || 0} bank slips`);
 
         setElemText("card-udhaar", formatMoney(udhaarGivenAmt));
         setElemText("card-udhaar-count", `${data.udhaar_count || 0} given`);
@@ -989,6 +995,8 @@ async function loadMonthlyClosing(monthStr) {
     } catch (e) {
         if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="p-8 text-center text-rose-400">${e.message}</td></tr>`;
     }
+}
+
 function exportSelectedMonthExcel() {
     window.location.href = `/api/export-excel?month_year=${encodeURIComponent(activeSelectedMonth)}`;
 }

@@ -76,6 +76,18 @@ def get_closing_for_date(target_date: str):
     return db.get_closing_summary_for_date(target_date)
 
 
+@app.get("/api/daily-closing")
+def get_daily_closing(date: Optional[str] = Query(None)):
+    if not date:
+        date = datetime.now().strftime("%Y-%m-%d")
+    return db.get_closing_summary_for_date(date)
+
+
+@app.get("/api/transactions")
+def get_transactions_alias(limit: int = 50, offset: int = 0):
+    return db.get_recent_transactions(limit=limit, offset=offset)
+
+
 class LoginRequest(BaseModel):
     pin: str
 
