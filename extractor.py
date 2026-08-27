@@ -17,7 +17,7 @@ from PIL import Image, ImageOps
 import time
 
 DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
-MODEL_POOL = ["gemini-3.1-flash-lite-preview", "gemini-3-flash-preview"]
+MODEL_POOL = ["gemini-3.1-flash-lite-preview", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"]
 
 SYSTEM_PROMPT_EXTRACTION = """You are an expert financial receipt and bank transfer OCR AI for Pakistani businesses and snooker lounges.
 Analyze the provided image of a receipt, invoice, bank transfer screenshot, mobile banking app screen (EasyPaisa, JazzCash, SadaPay, NayaPay, Raast, HBL, Meezan, Bank Alfalah, UBL, MCB, Allied Bank, Faisal Bank, etc.), paper slip, or handwritten transaction.
@@ -217,7 +217,8 @@ def extract_transaction_from_image(
                 else:
                     raise ValueError(f"Could not parse valid JSON from AI response: {text_content[:200]}")
             elif response.status_code == 429:
-                # Instant failover to next model in pool
+                # Rate limited: short pause and failover to next model
+                time.sleep(0.4)
                 last_error = f"Model {current_model} rate limited, switching..."
                 continue
             else:
@@ -233,7 +234,7 @@ def extract_transaction_from_image(
 
 
 def _normalize_extracted_dict(res: Dict[str, Any]) -> Dict[str, Any]:
-    """Normalize extracted dictionary fields and types."""
+    """Normalize extracted dictionary fields and types with zero-amount recovery."""
     res["merchant"] = str(res.get("merchant") or "Bank Transfer / Slip")
     res["date"] = str(res.get("date") or "")
     try:
@@ -252,6 +253,22 @@ def _normalize_extracted_dict(res: Dict[str, Any]) -> Dict[str, Any]:
         res["tax_amount"] = float(res.get("tax_amount") or 0.0)
     except (ValueError, TypeError):
         res["tax_amount"] = 0.0
+
+    # If amount came back 0.0, attempt recovery from notes or items
+    if res["total_amount"] <= 0.0:
+        notes_str = str(res.get("notes") or "")
+        merchant_str = str(res.get("merchant") or "")
+        search_blob = f"{notes_str} {merchant_str}"
+        m_amt = re.search(r'(?:Rs\.?|PKR|Amount|Paid|Transferred|Total)[\s:]*([0-9,]+(?:\.[0-9]{1,2})?)', search_blob, re.IGNORECASE)
+        if m_amt:
+            try:
+                rec_val = float(m_amt.group(1).replace(",", ""))
+                if rec_val > 0:
+                    res["total_amount"] = rec_val
+                    res["gross_amount"] = max(res.get("gross_amount", 0.0), rec_val)
+            except Exception:
+                pass
+
     res["currency"] = str(res.get("currency") or "PKR")
     res["category"] = str(res.get("category") or "Bank Receipt")
     res["payment_method"] = str(res.get("payment_method") or "Bank")

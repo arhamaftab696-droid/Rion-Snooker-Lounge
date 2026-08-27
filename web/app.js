@@ -873,8 +873,8 @@ async function handleFileSelect(files) {
         }
     };
 
-    // Run parallel batches with concurrency of 3
-    const CONCURRENCY = 3;
+    // Run parallel batches with optimal concurrency of 2
+    const CONCURRENCY = 2;
     const queue = Array.from(files).map((f, i) => () => processSingleSlip(f, i));
     const running = [];
 
