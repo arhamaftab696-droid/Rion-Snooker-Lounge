@@ -17,7 +17,7 @@ from PIL import Image, ImageOps
 import time
 
 DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
-MODEL_POOL = ["gemini-3.1-flash-lite-preview", "gemini-3.1-flash-lite", "gemini-flash-lite-latest"]
+MODEL_POOL = ["gemini-3.1-flash-lite-preview", "gemini-3.1-flash-lite"]
 
 SYSTEM_PROMPT_EXTRACTION = """You are an expert financial receipt and bank transfer OCR AI for Pakistani businesses and snooker lounges.
 Analyze the provided image of a receipt, invoice, bank transfer screenshot, mobile banking app screen (EasyPaisa, JazzCash, SadaPay, NayaPay, Raast, HBL, Meezan, Bank Alfalah, UBL, MCB, Allied Bank, Faisal Bank, etc.), paper slip, or handwritten transaction.

@@ -408,13 +408,16 @@ async function refreshDayView() {
     }
 }
 
+let cachedDayTransactions = [];
+
 function renderDayBook(txs) {
+    cachedDayTransactions = Array.isArray(txs) ? txs : [];
     const tbody = document.getElementById("daybookTbody");
     const subTitle = document.getElementById("daybookSubtitle");
-    if (subTitle) subTitle.textContent = `${txs.length} transactions on this date`;
+    if (subTitle) subTitle.textContent = `${cachedDayTransactions.length} transactions on this date`;
     if (!tbody) return;
 
-    if (!txs || txs.length === 0) {
+    if (!cachedDayTransactions || cachedDayTransactions.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="5" class="p-8 text-center text-slate-500">
@@ -428,7 +431,7 @@ function renderDayBook(txs) {
     }
 
     let rowsHtml = "";
-    txs.forEach(t => {
+    cachedDayTransactions.forEach(t => {
         const isUdhaar = t.tx_type === "Udhaar";
         const isUdhaarRet = t.tx_type === "Udhaar Recovery" || t.category === "Udhaar Recovery";
         const isCredit = t.tx_type === "Credit";
@@ -468,8 +471,8 @@ function renderDayBook(txs) {
         const hasImg = Boolean(t.image_path);
 
         let slipBtn = hasImg
-          ? `<button onclick="openSlipViewerModal(${t.id}, '${escapeHtml(t.merchant)}', ${t.total_amount}, '${escapeHtml(t.notes || '')}', true)" class="inline-flex items-center gap-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 text-[10px] font-bold px-2 py-1 rounded-lg transition shadow-sm" title="View Uploaded Slip Photo"><i data-lucide="image" class="w-3 h-3 text-sky-400"></i> Slip</button>`
-          : `<button onclick="openSlipViewerModal(${t.id}, '${escapeHtml(t.merchant)}', ${t.total_amount}, '${escapeHtml(t.notes || '')}', false)" class="inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold px-2 py-1 rounded-lg border border-slate-700 transition" title="Edit Entry Details"><i data-lucide="edit-2" class="w-3 h-3 text-slate-400"></i> Edit</button>`;
+          ? `<button onclick="openSlipViewerModal(${t.id})" class="inline-flex items-center gap-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 text-[10px] font-bold px-2 py-1 rounded-lg transition shadow-sm" title="View Uploaded Slip Photo"><i data-lucide="image" class="w-3 h-3 text-sky-400"></i> Slip</button>`
+          : `<button onclick="openSlipViewerModal(${t.id})" class="inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold px-2 py-1 rounded-lg border border-slate-700 transition" title="Edit Entry Details"><i data-lucide="edit-2" class="w-3 h-3 text-slate-400"></i> Edit</button>`;
 
         let actionHtml = `
           <div class="flex items-center justify-center gap-1.5">
@@ -929,13 +932,16 @@ async function handleFileSelect(files) {
 // =============================================================================
 let activeEditingTxId = null;
 
-function openSlipViewerModal(id, merchant, amount, notes, hasImage) {
+function openSlipViewerModal(id) {
     activeEditingTxId = id;
+    const t = cachedDayTransactions.find(x => x.id === id) || { id, merchant: "", total_amount: 0, notes: "", image_path: "" };
+    const hasImage = Boolean(t.image_path);
+
     const m = document.getElementById("slipViewerModal");
     if (!m) return;
     m.classList.remove("hidden");
 
-    setElemText("slipModalTitle", merchant || `Entry #${id}`);
+    setElemText("slipModalTitle", t.merchant || `Entry #${id}`);
     setElemText("slipModalSubtitle", `Transaction #${id} • ${hasImage ? "Slip Photo Attached" : "Manual Entry"}`);
 
     const img = document.getElementById("slipModalImg");
@@ -954,9 +960,9 @@ function openSlipViewerModal(id, merchant, amount, notes, hasImage) {
     const merInp = document.getElementById("slipEditMerchant");
     const amtInp = document.getElementById("slipEditAmount");
     const nInp = document.getElementById("slipEditNotes");
-    if (merInp) merInp.value = merchant || "";
-    if (amtInp) amtInp.value = amount || 0;
-    if (nInp) nInp.value = notes || "";
+    if (merInp) merInp.value = t.merchant || "";
+    if (amtInp) amtInp.value = t.total_amount || 0;
+    if (nInp) nInp.value = t.notes || "";
     if (window.lucide) lucide.createIcons();
 }
 
