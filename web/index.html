@@ -82,20 +82,20 @@
   </div>
 
   <!-- Top Navigation Header -->
-  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-md">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+  <header class="sticky top-0 z-40 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 shadow-md" style="padding-top: max(8px, env(safe-area-inset-top));">
+    <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
       
       <!-- Brand Logo: Rion Snooker Lounge -->
-      <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('daily')">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 border border-emerald-400/40 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white text-2xl font-black">
+      <div class="flex items-center space-x-2.5 cursor-pointer active:scale-95 transition" onclick="switchTab('daily')">
+        <div class="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-gradient-to-br from-emerald-600 via-teal-700 to-slate-900 border border-emerald-400/40 flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white text-xl sm:text-2xl font-black">
           🎱
         </div>
         <div>
-          <div class="font-extrabold text-lg leading-tight tracking-tight flex items-center gap-2 text-white">
-            RION <span class="text-emerald-400 font-black">SNOOKER LOUNGE</span>
-            <span class="text-[10px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full font-bold">CLUB POS</span>
+          <div class="font-extrabold text-sm sm:text-lg leading-tight tracking-tight flex items-center gap-1.5 text-white">
+            RION <span class="text-emerald-400 font-black">SNOOKER</span>
+            <span class="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded-full font-bold">POS</span>
           </div>
-          <p class="text-xs text-slate-400">Snooker Club Management & Daily Closing Ledger</p>
+          <p class="hidden sm:block text-[11px] text-slate-400">Club Management & Daily Closing Ledger</p>
         </div>
       </div>
 
@@ -117,59 +117,56 @@
           <i data-lucide="bar-chart-3" class="w-4 h-4"></i> 📊 History
         </button>
         <button id="nav-chat" onclick="switchTab('chat')" class="nav-btn px-3 py-2 text-xs font-bold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all flex items-center gap-1.5">
-          <i data-lucide="bot" class="w-4 h-4"></i> 💬 AI Assistant
+          <i data-lucide="bot" class="w-4 h-4"></i> 💬 AI Chat
         </button>
         <button id="nav-settings" onclick="switchTab('settings')" class="nav-btn px-3 py-2 text-xs font-bold rounded-lg text-slate-300 hover:text-white hover:bg-slate-700/50 transition-all flex items-center gap-1.5">
           <i data-lucide="settings" class="w-4 h-4"></i> ⚙️ Settings
         </button>
       </nav>
 
-      <!-- Quick Export & Status -->
+      <!-- Header Action Buttons -->
       <div class="flex items-center space-x-2">
-        <button onclick="downloadRionExcel()" title="Export Formatted Excel Spreadsheet" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 transition-all text-white text-xs font-bold px-3 py-2 rounded-lg shadow-md flex items-center gap-1.5 border border-emerald-400/30">
-          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Export</span> Excel
+        <button onclick="downloadRionExcel()" title="Export Formatted Excel" class="bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 active:scale-95 transition-all text-white text-xs font-bold px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl shadow-md flex items-center gap-1 border border-emerald-400/30">
+          <i data-lucide="file-spreadsheet" class="w-4 h-4"></i> <span>Excel</span>
         </button>
-        <button onclick="downloadRionCSV()" title="Export CSV" class="bg-slate-800 hover:bg-slate-700 active:scale-95 transition-all text-slate-300 hover:text-white text-xs font-semibold px-2.5 py-2 rounded-lg shadow flex items-center gap-1 border border-slate-700">
-          <i data-lucide="download" class="w-3.5 h-3.5"></i> CSV
-        </button>
-        <button onclick="handleWebLogout()" title="Lock Software" class="bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-rose-400 border border-slate-700 text-xs font-semibold px-2.5 py-2 rounded-lg transition flex items-center gap-1">
-          <i data-lucide="lock" class="w-3.5 h-3.5"></i> <span class="hidden sm:inline">Lock</span>
+        <button onclick="handleWebLogout()" title="Lock Software" class="bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/60 text-xs font-semibold px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl transition active:scale-95 flex items-center gap-1">
+          <i data-lucide="lock" class="w-4 h-4"></i> <span class="hidden sm:inline">Lock</span>
         </button>
         <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="System Online"></div>
       </div>
     </div>
-
-    <!-- Mobile Navigation Bar -->
-    <div class="md:hidden flex border-t border-slate-800 bg-slate-900 px-2 py-1.5 justify-around text-xs">
-      <button onclick="switchTab('daily')" class="flex flex-col items-center py-1 px-1.5 text-brand-400 font-semibold" id="mob-daily">
-        <i data-lucide="calendar" class="w-4 h-4 mb-0.5"></i>
-        <span>Daily</span>
-      </button>
-      <button onclick="switchTab('monthly')" class="flex flex-col items-center py-1 px-1.5 text-slate-400" id="mob-monthly">
-        <i data-lucide="calendar-range" class="w-4 h-4 mb-0.5"></i>
-        <span>Monthly</span>
-      </button>
-      <button onclick="switchTab('khata')" class="flex flex-col items-center py-1 px-1.5 text-slate-400" id="mob-khata">
-        <i data-lucide="users" class="w-4 h-4 mb-0.5"></i>
-        <span>Khata</span>
-      </button>
-      <button onclick="switchTab('staff')" class="flex flex-col items-center py-1 px-1.5 text-slate-400" id="mob-staff">
-        <i data-lucide="user-check" class="w-4 h-4 mb-0.5"></i>
-        <span>Staff</span>
-      </button>
-      <button onclick="switchTab('history')" class="flex flex-col items-center py-1 px-1.5 text-slate-400" id="mob-history">
-        <i data-lucide="bar-chart-3" class="w-4 h-4 mb-0.5"></i>
-        <span>History</span>
-      </button>
-      <button onclick="handleWebLogout()" class="flex flex-col items-center py-1 px-1.5 text-rose-400" id="mob-lock">
-        <i data-lucide="lock" class="w-4 h-4 mb-0.5"></i>
-        <span>Lock</span>
-      </button>
-    </div>
   </header>
 
+  <!-- Fixed Native iOS Bottom Navigation Bar -->
+  <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-xl border-t border-slate-800/80 flex justify-around items-center px-1 py-1 shadow-2xl" style="padding-bottom: max(10px, env(safe-area-inset-bottom));">
+    <button onclick="switchTab('daily')" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-brand-400 font-bold transition active:scale-95 flex-1" id="mob-daily">
+      <i data-lucide="calendar" class="w-5 h-5 mb-0.5"></i>
+      <span class="text-[10px]">Daily</span>
+    </button>
+    <button onclick="switchTab('monthly')" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-slate-400 transition active:scale-95 flex-1" id="mob-monthly">
+      <i data-lucide="calendar-range" class="w-5 h-5 mb-0.5"></i>
+      <span class="text-[10px]">Monthly</span>
+    </button>
+    <button onclick="switchTab('khata')" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-slate-400 transition active:scale-95 flex-1" id="mob-khata">
+      <i data-lucide="users" class="w-5 h-5 mb-0.5"></i>
+      <span class="text-[10px]">Khata</span>
+    </button>
+    <button onclick="switchTab('staff')" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-slate-400 transition active:scale-95 flex-1" id="mob-staff">
+      <i data-lucide="user-check" class="w-5 h-5 mb-0.5"></i>
+      <span class="text-[10px]">Staff</span>
+    </button>
+    <button onclick="switchTab('history')" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-slate-400 transition active:scale-95 flex-1" id="mob-history">
+      <i data-lucide="bar-chart-3" class="w-5 h-5 mb-0.5"></i>
+      <span class="text-[10px]">History</span>
+    </button>
+    <button onclick="switchTab('settings')" class="flex flex-col items-center justify-center py-1.5 px-2 rounded-xl text-slate-400 transition active:scale-95 flex-1" id="mob-settings">
+      <i data-lucide="settings" class="w-5 h-5 mb-0.5"></i>
+      <span class="text-[10px]">Settings</span>
+    </button>
+  </nav>
+
   <!-- Main App Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full space-y-6">
+  <main class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 md:pb-8 flex-1 w-full space-y-6">
 
     <!-- ========================================================================= -->
     <!-- TAB 1: DAILY CLOSING & ENTRIES -->
@@ -1375,8 +1372,8 @@
     </div>
   </div>
 
-  <!-- Sticky Bottom Summary Footer -->
-  <footer class="fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-4 py-2 flex items-center justify-between text-xs shadow-2xl">
+  <!-- Sticky Bottom Summary Footer (Desktop Only) -->
+  <footer class="hidden md:flex fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-4 py-2 items-center justify-between text-xs shadow-2xl">
     <div class="flex items-center space-x-2 text-slate-400">
       <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
       <span class="hidden sm:inline">Rion Snooker Lounge System</span>
@@ -1390,6 +1387,6 @@
   </footer>
 
   <!-- Frontend Logic -->
-  <script src="/static/app.js?v=20260827_03"></script>
+  <script src="/static/app.js?v=20260827_04"></script>
 </body>
 </html>
