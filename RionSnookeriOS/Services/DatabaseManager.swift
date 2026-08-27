@@ -25,6 +25,16 @@ public class DatabaseManager: ObservableObject {
 
     private func openDatabase() {
         let path = dbURL.path
+        let fileManager = FileManager.default
+
+        // If local documents db doesn't exist, copy the pre-seeded bundled transactions.db
+        if !fileManager.fileExists(atPath: path) {
+            if let bundleDB = Bundle.main.url(forResource: "transactions", withExtension: "db") {
+                try? fileManager.copyItem(at: bundleDB, to: dbURL)
+                print("✅ Seeded iPhone database from bundled transactions.db")
+            }
+        }
+
         if sqlite3_open(path, &db) != SQLITE_OK {
             print("❌ Error opening SQLite database at \(path)")
         } else {
@@ -385,5 +395,46 @@ public class DatabaseManager: ObservableObject {
         }
         sqlite3_finalize(stmt)
         return ok
+    }
+
+    // =========================================================================
+    // CLOUD & MAC SYNC
+    // =========================================================================
+    public func syncWithCloud(completion: @escaping (Bool, String) -> Void) {
+        guard let url = URL(string: "https://rion-snooker-lounge-rk51.onrender.com/api/backup/download-db") else {
+            completion(false, "Invalid Cloud URL")
+            return
+        }
+
+        URLSession.shared.downloadTask(with: url) { tempURL, response, error in
+            guard let tempURL = tempURL, error == nil else {
+                DispatchQueue.main.async {
+                    completion(false, error?.localizedDescription ?? "Cloud connection failed")
+                }
+                return
+            }
+
+            if self.db != nil {
+                sqlite3_close(self.db)
+                self.db = nil
+            }
+
+            let fileManager = FileManager.default
+            do {
+                if fileManager.fileExists(atPath: self.dbURL.path) {
+                    try fileManager.removeItem(at: self.dbURL)
+                }
+                try fileManager.moveItem(at: tempURL, to: self.dbURL)
+                self.openDatabase()
+                DispatchQueue.main.async {
+                    completion(true, "✅ Successfully synced all transactions, Khata and staff records!")
+                }
+            } catch {
+                self.openDatabase()
+                DispatchQueue.main.async {
+                    completion(false, "Sync error: \(error.localizedDescription)")
+                }
+            }
+        }.resume()
     }
 }

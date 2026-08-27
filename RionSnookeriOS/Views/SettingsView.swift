@@ -6,6 +6,8 @@ public struct SettingsView: View {
     @State private var newPIN: String = ""
     @State private var confirmPIN: String = ""
     @State private var pinMessage: String = ""
+    @State private var isSyncing: Bool = false
+    @State private var syncStatusMessage: String = ""
 
     public init() {}
 
@@ -66,9 +68,9 @@ public struct SettingsView: View {
                         .cornerRadius(16)
                         .padding(.horizontal)
 
-                        // Database Info Card
-                        VStack(alignment: .leading, spacing: 10) {
-                            Text("LOCAL IPHONE DATABASE")
+                        // Database Info & Cloud Sync Card
+                        VStack(alignment: .leading, spacing: 14) {
+                            Text("LOCAL IPHONE DATABASE & SYNC")
                                 .font(.system(size: 11, weight: .bold))
                                 .foregroundColor(.gray)
 
@@ -80,9 +82,33 @@ public struct SettingsView: View {
                                     .foregroundColor(.white)
                             }
 
-                            Text("File: \(DatabaseManager.shared.dbURL.lastPathComponent)")
+                            Text("Path: \(DatabaseManager.shared.dbURL.lastPathComponent)")
                                 .font(.system(size: 11))
                                 .foregroundColor(.gray)
+
+                            if !syncStatusMessage.isEmpty {
+                                Text(syncStatusMessage)
+                                    .font(.system(size: 12, weight: .bold))
+                                    .foregroundColor(syncStatusMessage.contains("✅") ? .emeraldGreen : .red)
+                            }
+
+                            Button(action: triggerSync) {
+                                HStack {
+                                    if isSyncing {
+                                        ProgressView().progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    } else {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                    }
+                                    Text(isSyncing ? "Syncing with Cloud..." : "☁️ Sync Data from Mac / Cloud")
+                                        .font(.system(size: 14, weight: .bold))
+                                }
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 12)
+                                .background(Color.blue)
+                                .cornerRadius(10)
+                            }
+                            .disabled(isSyncing)
                         }
                         .padding()
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -137,6 +163,15 @@ public struct SettingsView: View {
             confirmPIN = ""
         } else {
             pinMessage = "❌ Error saving new PIN."
+        }
+    }
+
+    private func triggerSync() {
+        isSyncing = true
+        syncStatusMessage = ""
+        DatabaseManager.shared.syncWithCloud { success, message in
+            isSyncing = false
+            syncStatusMessage = message
         }
     }
 }
