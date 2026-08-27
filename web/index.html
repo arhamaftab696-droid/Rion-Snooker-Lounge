@@ -135,6 +135,31 @@
         <div class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" title="System Online"></div>
       </div>
     </div>
+
+    <!-- Mobile Scrollable Tab Bar (Top) -->
+    <div class="flex md:hidden overflow-x-auto no-scrollbar py-2 px-3 space-x-2 bg-slate-900/95 border-t border-slate-800 shadow-inner">
+      <button onclick="switchTab('daily')" id="mobtop-daily" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all bg-emerald-600 text-white shadow active:scale-95">
+        📅 Daily
+      </button>
+      <button onclick="switchTab('monthly')" id="mobtop-monthly" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all bg-slate-800 text-slate-300 active:scale-95">
+        🗓️ Monthly
+      </button>
+      <button onclick="switchTab('khata')" id="mobtop-khata" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all bg-slate-800 text-slate-300 active:scale-95">
+        👥 Khata
+      </button>
+      <button onclick="switchTab('staff')" id="mobtop-staff" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all bg-slate-800 text-slate-300 active:scale-95">
+        👨‍💼 Staff
+      </button>
+      <button onclick="switchTab('history')" id="mobtop-history" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all bg-slate-800 text-slate-300 active:scale-95">
+        📊 History
+      </button>
+      <button onclick="switchTab('chat')" id="mobtop-chat" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all bg-slate-800 text-slate-300 active:scale-95">
+        💬 AI Chat
+      </button>
+      <button onclick="switchTab('settings')" id="mobtop-settings" class="px-3.5 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all bg-slate-800 text-slate-300 active:scale-95">
+        ⚙️ Settings
+      </button>
+    </div>
   </header>
 
   <!-- Fixed Native iOS Bottom Navigation Bar -->
@@ -257,13 +282,13 @@
         </div>
 
         <!-- NET DAILY SETTLEMENT BALANCE CARD -->
-        <div class="bg-gradient-to-br from-brand-900/50 via-slate-900 to-slate-900 border border-brand-500/30 p-3.5 sm:p-4 rounded-2xl shadow-md relative overflow-hidden group hover:border-brand-500/50 transition">
+        <div class="bg-gradient-to-br from-emerald-950/90 via-slate-900 to-slate-900 border-2 border-emerald-500/60 p-3.5 sm:p-4 rounded-2xl shadow-xl relative overflow-hidden group hover:border-emerald-400 transition">
           <div class="flex items-center justify-between text-slate-400 mb-2">
-            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-brand-400">💎 NET CLOSING</span>
-            <i data-lucide="sparkles" class="w-4 h-4 text-brand-400"></i>
+            <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-400">💎 NET CLOSING</span>
+            <i data-lucide="sparkles" class="w-4 h-4 text-emerald-400"></i>
           </div>
-          <div class="text-lg sm:text-xl font-extrabold text-brand-300 tracking-tight" id="card-net">PKR 0.00</div>
-          <p class="text-[10px] text-brand-400/80 mt-1" id="card-net-formula">Total In - Expenses</p>
+          <div class="text-xl sm:text-2xl font-black text-emerald-300 tracking-tight" id="card-net">PKR 0.00</div>
+          <p class="text-[10px] text-emerald-400/90 font-bold mt-1" id="card-net-formula">Total In - Expenses</p>
         </div>
 
       </div>

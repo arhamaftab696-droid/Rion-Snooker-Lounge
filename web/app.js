@@ -259,9 +259,6 @@ async function fetchAndPopulateCustomers() {
             populateUploadCustomerSelect();
             const dl = document.getElementById("khataCustomerDatalist");
             if (dl && data.clients) {
-                dl.innerHTML = data.clients.map(c => `<option value="${escapeHtml(c.customer_name)}">PKR ${c.pending_balance.toLocaleString()} pending</option>`).join("");
-            }
-        }
     } catch (e) {
         console.error("Failed to load customers for upload menu:", e);
     }
@@ -276,36 +273,49 @@ function switchTab(tabId) {
         const sec = document.getElementById(`tab-${t}`);
         const nav = document.getElementById(`nav-${t}`);
         const mob = document.getElementById(`mob-${t}`);
+        const mobtop = document.getElementById(`mobtop-${t}`);
 
         if (t === tabId) {
             if (sec) sec.classList.remove("hidden");
             if (nav) {
-                nav.classList.add("bg-brand-600", "text-white", "shadow");
+                nav.classList.add("bg-emerald-600", "text-white", "shadow");
                 nav.classList.remove("text-slate-300", "hover:bg-slate-700/50");
             }
             if (mob) {
-                mob.classList.add("text-brand-400", "font-semibold");
+                mob.classList.add("text-emerald-400", "font-bold");
                 mob.classList.remove("text-slate-400");
+            }
+            if (mobtop) {
+                mobtop.classList.add("bg-emerald-600", "text-white", "shadow");
+                mobtop.classList.remove("bg-slate-800", "text-slate-300");
             }
         } else {
             if (sec) sec.classList.add("hidden");
             if (nav) {
-                nav.classList.remove("bg-brand-600", "text-white", "shadow");
+                nav.classList.remove("bg-emerald-600", "text-white", "shadow");
                 nav.classList.add("text-slate-300", "hover:bg-slate-700/50");
             }
             if (mob) {
-                mob.classList.remove("text-brand-400", "font-semibold");
+                mob.classList.remove("text-emerald-400", "font-bold");
                 mob.classList.add("text-slate-400");
+            }
+            if (mobtop) {
+                mobtop.classList.remove("bg-emerald-600", "text-white", "shadow");
+                mobtop.classList.add("bg-slate-800", "text-slate-300");
             }
         }
     });
 
-    if (tabId === "daily") refreshDayView();
-    if (tabId === "monthly") loadMonthlyClosing();
-    if (tabId === "khata") loadKhataSummary();
-    if (tabId === "staff") loadStaffSummary();
-    if (tabId === "history") loadHistory();
-    if (window.lucide) lucide.createIcons();
+    try {
+        if (tabId === "daily") refreshDayView();
+        if (tabId === "monthly") loadMonthlyClosing();
+        if (tabId === "khata") loadKhataSummary();
+        if (tabId === "staff") loadStaffSummary();
+        if (tabId === "history") loadHistory();
+        if (window.lucide) lucide.createIcons();
+    } catch (e) {
+        console.error("Tab switch error:", e);
+    }
 }
 
 // =============================================================================
@@ -326,7 +336,7 @@ function navigateDay(delta) {
     refreshDayView();
 }
 
-function goToToday() {
+function setToday() {
     activeDate = new Date().toISOString().split("T")[0];
     const dInput = document.getElementById("activeDateInput");
     if (dInput) dInput.value = activeDate;
@@ -334,28 +344,38 @@ function goToToday() {
 }
 
 // =============================================================================
-// LOAD & REFRESH DAILY VIEW
+// DAY VIEW DATA LOADING
 // =============================================================================
 async function refreshDayView() {
     try {
-        const res = await fetch(`/api/closings/${activeDate}`);
-        if (!res.ok) throw new Error("Failed to fetch day summary");
+        const dInput = document.getElementById("activeDateInput");
+        if (dInput && dInput.value !== activeDate) {
+            dInput.value = activeDate;
+        }
+
+        const dateHeader = document.getElementById("activeDateHeader");
+        if (dateHeader) {
+            const dateObj = new Date(activeDate + "T00:00:00");
+            dateHeader.textContent = dateObj.toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        const res = await fetch(`/api/daily-closing?date=${activeDate}`);
+        if (!res.ok) throw new Error("Failed to fetch daily closing");
         const data = await res.json();
 
-        // 6 Financial Settlement Cards
-        const cashAmt = data.cash_credit || 0;
-        const bankAmt = data.bank_credit || 0;
-        const udhaarGivenAmt = data.total_udhaar || 0;
-        const udhaarReturnedAmt = data.total_udhaar_returned || 0;
-        const expAmt = data.expense_cash || data.total_expense || 0;
-        const totalSales = cashAmt + bankAmt;
-        const netAmt = totalSales - expAmt;
+        // Populate Summary Cards
+        const totalCreditAmt = (data.cash_sales || 0) + (data.bank_slips || 0) + (data.udhaar_returned || 0);
+        const expAmt = data.total_expense || 0;
+        const netAmt = totalCreditAmt - expAmt;
+        const udhaarGivenAmt = data.udhaar_given || 0;
+        const udhaarReturnedAmt = data.udhaar_returned || 0;
 
-        setElemText("card-cash", formatMoney(cashAmt));
-        setElemText("card-cash-count", `${data.credit_count || 0} cash sales`);
+        setElemText("card-total-credit", formatMoney(totalCreditAmt));
+        setElemText("card-cash", formatMoney(data.cash_sales || 0));
+        setElemText("card-cash-count", `${data.cash_count || 0} cash sales`);
 
-        setElemText("card-bank", formatMoney(bankAmt));
-        setElemText("card-bank-count", `${data.slips_count || 0} bank slips`);
+        setElemText("card-bank", formatMoney(data.bank_slips || 0));
+        setElemText("card-bank-count", `${data.bank_count || 0} bank slips`);
 
         setElemText("card-udhaar", formatMoney(udhaarGivenAmt));
         setElemText("card-udhaar-count", `${data.udhaar_count || 0} given`);
@@ -369,7 +389,7 @@ async function refreshDayView() {
         const netEl = document.getElementById("card-net");
         if (netEl) {
             netEl.textContent = formatMoney(netAmt);
-            netEl.className = `text-lg sm:text-xl font-extrabold tracking-tight ${netAmt >= 0 ? "text-brand-300" : "text-rose-400"}`;
+            netEl.className = `text-xl sm:text-2xl font-black tracking-tight ${netAmt >= 0 ? "text-emerald-300" : "text-rose-400"}`;
         }
 
         setElemText("footerNetSettlement", `${netAmt >= 0 ? "+" : ""}${formatMoney(netAmt)}`);
