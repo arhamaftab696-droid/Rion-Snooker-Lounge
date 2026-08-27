@@ -792,84 +792,97 @@ async function handleFileSelect(files) {
     const extrasDeducted = parseFloat(document.getElementById("uploadExtrasDeducted")?.value) || 0;
     const extrasReason = document.getElementById("uploadExtrasReason")?.value.trim() || "";
     const udhaarAmount = parseFloat(document.getElementById("uploadUdhaarAmount")?.value) || 0;
-
     const dateVal = activeDate || new Date().toISOString().split("T")[0];
 
     const statusBanner = document.getElementById("uploadStatus");
+    const statusText = document.getElementById("uploadStatusText");
+    const statusPercent = document.getElementById("uploadStatusPercent");
+
     if (statusBanner) statusBanner.classList.remove("hidden");
 
-    const formData = new FormData();
-    formData.append("target_date", dateVal);
-    formData.append("slip_type", slipType);
-    formData.append("customer_name", customerName);
-    formData.append("udhaar_amount", String(udhaarAmount));
-    formData.append("extras_deducted", String(extrasDeducted));
-    formData.append("extras_reason", extrasReason);
+    let successCount = 0;
+    let failCount = 0;
 
     for (let i = 0; i < files.length; i++) {
         const rawFile = files[i];
+        const progressStr = `Processing slip ${i + 1} of ${files.length}...`;
+        const percentStr = `${Math.round(((i + 1) / files.length) * 100)}%`;
+
+        if (statusText) statusText.textContent = progressStr;
+        if (statusPercent) statusPercent.textContent = percentStr;
+
+        // 1. Compress photo on phone/device (under 100KB in ~30ms)
         let processedFile = rawFile;
         try {
-            processedFile = await compressImageFile(rawFile);
+            processedFile = await compressImageFile(rawFile, 1200, 0.75);
         } catch (_) {}
-        const safeName = processedFile.name || `photo_${Date.now()}_${i}.jpg`;
+
+        const safeName = processedFile.name || `slip_${Date.now()}_${i + 1}.jpg`;
+
+        // 2. Prepare single slip payload
+        const formData = new FormData();
+        formData.append("target_date", dateVal);
+        formData.append("slip_type", slipType);
+        formData.append("customer_name", customerName);
+        formData.append("udhaar_amount", String(udhaarAmount));
+        formData.append("extras_deducted", String(extrasDeducted));
+        formData.append("extras_reason", extrasReason);
         formData.append("files", processedFile, safeName);
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 20000);
+
+            const res = await fetch("/api/upload-slips", {
+                method: "POST",
+                body: formData,
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (res.ok) {
+                successCount++;
+            } else {
+                failCount++;
+                console.warn(`Slip ${i + 1} upload returned status ${res.status}`);
+            }
+        } catch (err) {
+            failCount++;
+            console.error(`Slip ${i + 1} error:`, err);
+        }
     }
 
+    if (statusBanner) statusBanner.classList.add("hidden");
+
+    // Reset inputs
+    const extAmt = document.getElementById("uploadExtrasDeducted");
+    const extRsn = document.getElementById("uploadExtrasReason");
+    const udhAmt = document.getElementById("uploadUdhaarAmount");
+    if (extAmt) extAmt.value = "";
+    if (extRsn) extRsn.value = "";
+    if (udhAmt) udhAmt.value = "";
+
     try {
-        const res = await fetch("/api/upload-slips", {
-            method: "POST",
-            body: formData
-        });
+        const fIn = document.getElementById("slipFileInput");
+        if (fIn) fIn.value = "";
+    } catch (_) {}
+    try {
+        const cIn = document.getElementById("cameraInput");
+        if (cIn) cIn.value = "";
+    } catch (_) {}
 
-        if (!res.ok) {
-            let errorText = `Server error (${res.status})`;
-            try {
-                const text = await res.text();
-                try {
-                    const err = JSON.parse(text);
-                    if (Array.isArray(err.detail)) {
-                        errorText = err.detail.map(d => d.msg || JSON.stringify(d)).join(", ");
-                    } else if (typeof err.detail === "string") {
-                        errorText = err.detail;
-                    } else if (err.message) {
-                        errorText = err.message;
-                    } else {
-                        errorText = text || errorText;
-                    }
-                } catch (_) {
-                    errorText = text || errorText;
-                }
-            } catch (_) {}
-            throw new Error(errorText);
-        }
+    await refreshDayView();
 
-        // Reset extras & udhaar inputs on success
-        const extAmt = document.getElementById("uploadExtrasDeducted");
-        const extRsn = document.getElementById("uploadExtrasReason");
-        const udhAmt = document.getElementById("uploadUdhaarAmount");
-        if (extAmt) extAmt.value = "";
-        if (extRsn) extRsn.value = "";
-        if (udhAmt) udhAmt.value = "";
-
-        await refreshDayView();
+    if (successCount > 0 && failCount === 0) {
         if (slipType === "Udhaar") {
-            alert(`✅ Added Udhaar slip to customer '${customerName}'!`);
+            alert(`✅ Added ${successCount} Udhaar slip(s) to customer '${customerName}'!`);
         } else {
-            alert("✅ Slip uploaded and processed successfully!");
+            alert(`✅ Successfully processed & synced ${successCount} slip(s) to cloud!`);
         }
-    } catch (e) {
-        alert("Upload Notice: " + (e.message || String(e)));
-    } finally {
-        if (statusBanner) statusBanner.classList.add("hidden");
-        try {
-            const fIn = document.getElementById("slipFileInput");
-            if (fIn) fIn.value = "";
-        } catch (_) {}
-        try {
-            const cIn = document.getElementById("cameraInput");
-            if (cIn) cIn.value = "";
-        } catch (_) {}
+    } else if (successCount > 0 && failCount > 0) {
+        alert(`⚠️ Synced ${successCount} slip(s) successfully (${failCount} failed).`);
+    } else {
+        alert("❌ Failed to process slips. Please check internet connection or retry.");
     }
 }
 

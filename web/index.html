@@ -413,9 +413,12 @@
             </div>
 
             <!-- Upload Status Banner -->
-            <div id="uploadStatus" class="hidden mt-3 p-3 bg-brand-500/10 border border-brand-500/20 rounded-xl text-xs text-brand-300 flex items-center gap-2">
-              <div class="w-2 h-2 rounded-full bg-brand-400 animate-ping"></div>
-              <span>Processing & extracting slips with AI... Please wait.</span>
+            <div id="uploadStatus" class="hidden mt-3 p-3.5 bg-emerald-950/90 border border-emerald-500/50 rounded-2xl text-xs text-emerald-300 flex items-center justify-between shadow-lg">
+              <div class="flex items-center gap-2.5">
+                <div class="w-3 h-3 rounded-full bg-emerald-400 animate-ping"></div>
+                <span id="uploadStatusText" class="font-bold text-white">Processing slip 1 of 1...</span>
+              </div>
+              <span id="uploadStatusPercent" class="text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full font-bold border border-emerald-500/30">0%</span>
             </div>
 
             <!-- TWO INDEPENDENT DEDICATED SECTIONS: 1) EXTRAS DEDUCTED & 2) CUSTOMER UDHAAR -->
@@ -1412,6 +1415,6 @@
   </footer>
 
   <!-- Frontend Logic -->
-  <script src="/static/app.js?v=20260827_06"></script>
+  <script src="/static/app.js?v=20260827_07"></script>
 </body>
 </html>
