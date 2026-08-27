@@ -201,7 +201,7 @@ def settle_udhaar(payload: SettleUdhaarRequest):
 
 
 @app.post("/api/upload-slips")
-async def upload_slips(
+def upload_slips(
     target_date: Optional[str] = Form(None),
     slip_type: Optional[str] = Form(None),
     customer_name: Optional[str] = Form(None),
@@ -248,7 +248,7 @@ async def upload_slips(
         try:
             if hasattr(file, "file") and hasattr(file.file, "seek"):
                 file.file.seek(0)
-            file_bytes = await file.read() if hasattr(file, "read") else file.file.read()
+            file_bytes = file.file.read()
             with open(dest_path, "wb") as buffer:
                 buffer.write(file_bytes)
         except Exception:
