@@ -761,8 +761,22 @@ def get_receipt_image(tx_id: int):
     if not tx:
         raise HTTPException(status_code=404, detail="Transaction not found")
     img_path = tx.get("image_path")
-    if not img_path or not os.path.exists(img_path):
+    if not img_path:
         raise HTTPException(status_code=404, detail="No receipt image attached to this transaction")
+
+    if not os.path.exists(img_path):
+        candidate = os.path.join(RECEIPTS_DIR, str(tx.get("date", "")), os.path.basename(img_path))
+        if os.path.exists(candidate):
+            img_path = candidate
+        else:
+            for root, _, files in os.walk(RECEIPTS_DIR):
+                if os.path.basename(img_path) in files:
+                    img_path = os.path.join(root, os.path.basename(img_path))
+                    break
+
+    if not os.path.exists(img_path):
+        raise HTTPException(status_code=404, detail="Receipt image file not found on disk")
+
     mime = extractor.get_image_mime_type(img_path)
     return FileResponse(path=img_path, media_type=mime)
 
