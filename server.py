@@ -53,6 +53,17 @@ class ChatRequest(BaseModel):
     message: str
 
 
+@app.middleware("http")
+async def add_no_cache_headers(request: Request, call_next):
+    response = await call_next(request)
+    path = request.url.path
+    if path == "/" or path.startswith("/static") or path.startswith("/api/monthly-closing") or path.startswith("/api/daily-closing") or path.startswith("/api/closings"):
+        response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate, max-age=0"
+        response.headers["Pragma"] = "no-cache"
+        response.headers["Expires"] = "0"
+    return response
+
+
 # =============================================================================
 # API ROUTES
 # =============================================================================
@@ -257,8 +268,15 @@ async def upload_slips(
             base, ext = os.path.splitext(fname)
             dest_path = os.path.join(date_dir, f"{base}_{int(time.time()*1000)%1000000}{ext}")
 
-        with open(dest_path, "wb") as buffer:
-            shutil.copyfileobj(file.file, buffer)
+        try:
+            if hasattr(file, "file") and hasattr(file.file, "seek"):
+                file.file.seek(0)
+            file_bytes = await file.read() if hasattr(file, "read") else file.file.read()
+            with open(dest_path, "wb") as buffer:
+                buffer.write(file_bytes)
+        except Exception:
+            with open(dest_path, "wb") as buffer:
+                shutil.copyfileobj(file.file, buffer)
 
         try:
             extracted = extractor.extract_transaction_from_image(dest_path, api_key=api_key)

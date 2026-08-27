@@ -30,7 +30,7 @@ public struct NativeWebView: UIViewRepresentable {
         refreshControl.addTarget(context.coordinator, action: #selector(Coordinator.handleRefresh(_:)), for: .valueChanged)
         webView.scrollView.refreshControl = refreshControl
 
-        let request = URLRequest(url: url, cachePolicy: .useProtocolCachePolicy, timeoutInterval: 30)
+        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 45)
         webView.load(request)
         return webView
     }
@@ -46,9 +46,10 @@ public struct NativeWebView: UIViewRepresentable {
 
         @objc func handleRefresh(_ sender: UIRefreshControl) {
             sender.endRefreshing()
-            // Reload page on pull-down
+            // Reload page from fresh network without disk cache on pull-down
             if let webView = sender.superview as? UIScrollView, let parentView = webView.superview as? WKWebView {
-                parentView.reload()
+                let req = URLRequest(url: parent.url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData, timeoutInterval: 45)
+                parentView.load(req)
             }
         }
 
@@ -58,6 +59,7 @@ public struct NativeWebView: UIViewRepresentable {
             const overlay = document.getElementById('login-overlay');
             if (overlay) overlay.classList.add('hidden');
             document.body.style.backgroundColor = '#020617';
+            if (typeof refreshDayView === 'function') refreshDayView();
             """
             webView.evaluateJavaScript(js, completionHandler: nil)
         }
