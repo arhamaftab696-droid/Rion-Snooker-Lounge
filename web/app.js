@@ -714,12 +714,10 @@ function populateUploadCustomerSelect() {
     }
 }
 
-function compressImageFile(file, maxWidth = 1280, quality = 0.82) {
-    return new Promise((resolve) => {
-        if (!file.type || !file.type.startsWith("image/") || file.type === "image/svg+xml") {
-            return resolve(file);
-        }
+function compressImageFile(file, maxWidth = 900, quality = 0.7) {
+    if (!file || !file.type.startsWith("image/")) return file;
 
+    return new Promise((resolve) => {
         const reader = new FileReader();
         reader.onload = (e) => {
             const img = new Image();
@@ -800,26 +798,25 @@ async function handleFileSelect(files) {
 
     if (statusBanner) statusBanner.classList.remove("hidden");
 
+    let completedCount = 0;
     let successCount = 0;
     let failCount = 0;
+    const totalFiles = files.length;
 
-    for (let i = 0; i < files.length; i++) {
-        const rawFile = files[i];
-        const progressStr = `Processing slip ${i + 1} of ${files.length}...`;
-        const percentStr = `${Math.round(((i + 1) / files.length) * 100)}%`;
+    const updateProgress = () => {
+        if (statusText) statusText.textContent = `Processing slips... (${completedCount}/${totalFiles} done)`;
+        if (statusPercent) statusPercent.textContent = `${Math.round((completedCount / totalFiles) * 100)}%`;
+    };
+    updateProgress();
 
-        if (statusText) statusText.textContent = progressStr;
-        if (statusPercent) statusPercent.textContent = percentStr;
-
-        // 1. Compress photo on phone/device (under 100KB in ~30ms)
+    // Fast worker function for each slip
+    const processSingleSlip = async (rawFile, index) => {
         let processedFile = rawFile;
         try {
-            processedFile = await compressImageFile(rawFile, 1200, 0.75);
+            processedFile = await compressImageFile(rawFile, 900, 0.7);
         } catch (_) {}
 
-        const safeName = processedFile.name || `slip_${Date.now()}_${i + 1}.jpg`;
-
-        // 2. Prepare single slip payload
+        const safeName = processedFile.name || `slip_${Date.now()}_${index + 1}.jpg`;
         const formData = new FormData();
         formData.append("target_date", dateVal);
         formData.append("slip_type", slipType);
@@ -831,7 +828,7 @@ async function handleFileSelect(files) {
 
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 20000);
+            const timeoutId = setTimeout(() => controller.abort(), 12000);
 
             const res = await fetch("/api/upload-slips", {
                 method: "POST",
@@ -844,13 +841,31 @@ async function handleFileSelect(files) {
                 successCount++;
             } else {
                 failCount++;
-                console.warn(`Slip ${i + 1} upload returned status ${res.status}`);
             }
         } catch (err) {
             failCount++;
-            console.error(`Slip ${i + 1} error:`, err);
+        } finally {
+            completedCount++;
+            updateProgress();
+        }
+    };
+
+    // Run parallel batches with concurrency of 3
+    const CONCURRENCY = 3;
+    const queue = Array.from(files).map((f, i) => () => processSingleSlip(f, i));
+    const running = [];
+
+    for (const task of queue) {
+        const p = task().then(() => {
+            const idx = running.indexOf(p);
+            if (idx !== -1) running.splice(idx, 1);
+        });
+        running.push(p);
+        if (running.length >= CONCURRENCY) {
+            await Promise.race(running);
         }
     }
+    await Promise.all(running);
 
     if (statusBanner) statusBanner.classList.add("hidden");
 
@@ -875,14 +890,14 @@ async function handleFileSelect(files) {
 
     if (successCount > 0 && failCount === 0) {
         if (slipType === "Udhaar") {
-            alert(`✅ Added ${successCount} Udhaar slip(s) to customer '${customerName}'!`);
+            alert(`⚡ Added ${successCount} Udhaar slip(s) in seconds!`);
         } else {
-            alert(`✅ Successfully processed & synced ${successCount} slip(s) to cloud!`);
+            alert(`⚡ Done! Processed & synced ${successCount} slip(s) in seconds!`);
         }
     } else if (successCount > 0 && failCount > 0) {
         alert(`⚠️ Synced ${successCount} slip(s) successfully (${failCount} failed).`);
     } else {
-        alert("❌ Failed to process slips. Please check internet connection or retry.");
+        alert("❌ Failed to process slips. Please check connection or retry.");
     }
 }
 
