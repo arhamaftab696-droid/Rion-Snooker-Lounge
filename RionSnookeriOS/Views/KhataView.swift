@@ -65,16 +65,45 @@ public struct KhataView: View {
 
                     // Customer List
                     ScrollView {
-                        LazyVStack(spacing: 8) {
-                            ForEach(filteredCustomers) { cust in
-                                CustomerRow(customer: cust) {
-                                    selectedCustomer = cust
-                                    paymentAmount = ""
-                                    showPaymentModal = true
+                        if filteredCustomers.isEmpty {
+                            VStack(spacing: 14) {
+                                Image(systemName: "person.2.slash")
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.gray.opacity(0.5))
+                                Text("No Khata records found.")
+                                    .font(.system(size: 14, weight: .semibold))
+                                    .foregroundColor(.gray)
+
+                                Button(action: {
+                                    DatabaseManager.shared.syncWithCloud { _, _ in
+                                        loadCustomers()
+                                    }
+                                }) {
+                                    HStack {
+                                        Image(systemName: "arrow.triangle.2.circlepath")
+                                        Text("🔄 Sync All 29 Clients Now")
+                                            .font(.system(size: 14, weight: .bold))
+                                    }
+                                    .foregroundColor(.white)
+                                    .padding(.horizontal, 16)
+                                    .padding(.vertical, 10)
+                                    .background(Color.emeraldGreen)
+                                    .cornerRadius(10)
                                 }
                             }
+                            .padding(.vertical, 40)
+                        } else {
+                            LazyVStack(spacing: 8) {
+                                ForEach(filteredCustomers) { cust in
+                                    CustomerRow(customer: cust) {
+                                        selectedCustomer = cust
+                                        paymentAmount = ""
+                                        showPaymentModal = true
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
                         }
-                        .padding(.horizontal)
                     }
                 }
                 .padding(.top, 8)

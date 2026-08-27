@@ -414,16 +414,52 @@ public class DatabaseManager: ObservableObject {
     // =========================================================================
     public func getAllCustomers() -> [Customer] {
         var list: [Customer] = []
+
+        // Auto-seed customers if table is empty
+        let initialCustomers = [
+            "Abdullah", "Adnan", "Ali Raza", "Amir", "Asad",
+            "Bilal", "Daniyal", "Farhan", "Hamza", "Hassan",
+            "Ibrahim", "Junaid", "Kamran", "Kashif", "Mohsin",
+            "Nabeel", "Nasir", "Omer", "Raza", "Rehman",
+            "Saad", "Salman", "Shahid", "Taimoor", "Tariq",
+            "Usman", "Waqas", "Zahid", "Zain"
+        ]
+        for name in initialCustomers {
+            let q = "INSERT OR IGNORE INTO customers (name) VALUES (?);"
+            var s: OpaquePointer?
+            if sqlite3_prepare_v2(db, q, -1, &s, nil) == SQLITE_OK {
+                sqlite3_bind_text(s, 1, (name as NSString).utf8String, -1, nil)
+                sqlite3_step(s)
+            }
+            sqlite3_finalize(s)
+        }
+
+        // Also add any customers from transactions
+        let addFromTx = """
+        INSERT OR IGNORE INTO customers (name)
+        SELECT DISTINCT merchant FROM transactions
+        WHERE tx_type IN ('Udhaar', 'Udhaar Recovery')
+           OR category IN ('Customer Credit', 'Udhaar Recovery')
+           OR payment_method = 'Credit / Udhaar';
+        """
+        var err: UnsafeMutablePointer<Int8>?
+        sqlite3_exec(db, addFromTx, nil, nil, &err)
+
         let query = """
-        SELECT c.id, c.name, c.phone, c.notes, c.created_at,
-            COALESCE(SUM(CASE WHEN t.tx_type = 'Udhaar' THEN t.total_amount ELSE 0 END), 0.0) as total_given,
+        SELECT 
+            c.id, 
+            c.name, 
+            COALESCE(c.phone, ''), 
+            COALESCE(c.notes, ''), 
+            COALESCE(c.created_at, ''),
+            COALESCE(SUM(CASE WHEN t.tx_type = 'Udhaar' OR t.category = 'Customer Credit' THEN t.total_amount ELSE 0 END), 0.0) as total_given,
             COALESCE(SUM(CASE WHEN t.tx_type = 'Udhaar Recovery' OR t.category = 'Udhaar Recovery' THEN t.total_amount ELSE 0 END), 0.0) as total_returned,
             COUNT(t.id) as total_entries,
-            MAX(t.date) as last_date,
-            MIN(t.date) as first_date
+            COALESCE(MAX(t.date), '') as last_date,
+            COALESCE(MIN(t.date), '') as first_date
         FROM customers c
-        LEFT JOIN transactions t ON t.merchant = c.name
-        GROUP BY c.id
+        LEFT JOIN transactions t ON LOWER(TRIM(t.merchant)) = LOWER(TRIM(c.name))
+        GROUP BY c.name
         ORDER BY c.name ASC;
         """
         var stmt: OpaquePointer?
