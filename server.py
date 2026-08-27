@@ -202,53 +202,30 @@ def settle_udhaar(payload: SettleUdhaarRequest):
 
 @app.post("/api/upload-slips")
 async def upload_slips(
-    request: Request,
     target_date: Optional[str] = Form(None),
     slip_type: Optional[str] = Form(None),
     customer_name: Optional[str] = Form(None),
     udhaar_amount: Optional[str] = Form(None),
     extras_deducted: Optional[str] = Form(None),
     extras_reason: Optional[str] = Form(None),
-    files: Optional[List[UploadFile]] = File(None)
+    files: List[UploadFile] = File(...)
 ):
-    try:
-        form_data = await request.form()
-    except Exception:
-        form_data = {}
+    final_target_date = target_date or datetime.now().strftime("%Y-%m-%d")
+    final_slip_type = slip_type or "Bank Receipt"
+    safe_customer_name = (customer_name or "").strip()
+    safe_extras_reason = (extras_reason or "").strip()
 
-    final_target_date = target_date or form_data.get("target_date") or datetime.now().strftime("%Y-%m-%d")
-    final_slip_type = slip_type or form_data.get("slip_type") or "Bank Receipt"
-    final_customer_name = customer_name or form_data.get("customer_name") or ""
-    raw_udhaar = udhaar_amount or form_data.get("udhaar_amount") or "0"
-    raw_extras = extras_deducted or form_data.get("extras_deducted") or "0"
-    safe_extras_reason = extras_reason or form_data.get("extras_reason") or ""
-
-    # Parse amounts safely
     try:
-        parsed_udhaar_amount = float(str(raw_udhaar).replace(",", ""))
+        parsed_udhaar_amount = float(str(udhaar_amount or "0").replace(",", ""))
     except Exception:
         parsed_udhaar_amount = 0.0
 
     try:
-        parsed_extras_deducted = float(str(raw_extras).replace(",", ""))
+        parsed_extras_deducted = float(str(extras_deducted or "0").replace(",", ""))
     except Exception:
         parsed_extras_deducted = 0.0
 
-    safe_customer_name = str(final_customer_name).strip()
-
-    # Collect files safely
-    all_files: List[UploadFile] = []
-    if files:
-        for f in files:
-            if hasattr(f, "filename") and f.filename:
-                all_files.append(f)
-
-    for field_name in ["files", "file", "uploadFiles", "images", "photos"]:
-        if hasattr(form_data, "getlist"):
-            for item in form_data.getlist(field_name):
-                if hasattr(item, "filename") and item.filename and item not in all_files:
-                    all_files.append(item)
-
+    all_files = [f for f in files if hasattr(f, "filename") and f.filename]
     if not all_files:
         raise HTTPException(status_code=400, detail="No receipt image or file was selected.")
 
