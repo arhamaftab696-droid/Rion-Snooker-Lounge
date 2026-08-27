@@ -21,6 +21,7 @@
 		A10000172C7F000100000001 /* StaffView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000182C7F000100000001 /* StaffView.swift */; };
 		A10000192C7F000100000001 /* MonthlyView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001A2C7F000100000001 /* MonthlyView.swift */; };
 		A100001B2C7F000100000001 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A100001C2C7F000100000001 /* SettingsView.swift */; };
+		A10000322C7F000100000001 /* NativeWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000332C7F000100000001 /* NativeWebView.swift */; };
 		A100001D2C7F000100000001 /* libsqlite3.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = A100001E2C7F000100000001 /* libsqlite3.tbd */; };
 /* End PBXBuildFile section */
 
@@ -40,6 +41,7 @@
 		A10000182C7F000100000001 /* StaffView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StaffView.swift; sourceTree = "<group>"; };
 		A100001A2C7F000100000001 /* MonthlyView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonthlyView.swift; sourceTree = "<group>"; };
 		A100001C2C7F000100000001 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		A10000332C7F000100000001 /* NativeWebView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NativeWebView.swift; sourceTree = "<group>"; };
 		A100001E2C7F000100000001 /* libsqlite3.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libsqlite3.tbd; path = usr/lib/libsqlite3.tbd; sourceTree = SDKROOT; };
 		A10000202C7F000100000001 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -123,6 +125,7 @@
 				A10000182C7F000100000001 /* StaffView.swift */,
 				A100001A2C7F000100000001 /* MonthlyView.swift */,
 				A100001C2C7F000100000001 /* SettingsView.swift */,
+				A10000332C7F000100000001 /* NativeWebView.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -198,6 +201,7 @@
 				A10000172C7F000100000001 /* StaffView.swift in Sources */,
 				A10000192C7F000100000001 /* MonthlyView.swift in Sources */,
 				A100001B2C7F000100000001 /* SettingsView.swift in Sources */,
+				A10000322C7F000100000001 /* NativeWebView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
