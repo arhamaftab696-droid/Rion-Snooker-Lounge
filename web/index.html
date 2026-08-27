@@ -582,13 +582,13 @@
           <p class="text-[10px] text-slate-400 mt-1">month total out</p>
         </div>
 
-        <div class="bg-gradient-to-br from-brand-900/50 via-slate-900 to-slate-900 border border-brand-500/30 p-3.5 sm:p-4 rounded-2xl shadow-md">
+        <div class="bg-gradient-to-br from-emerald-950/90 via-slate-900 to-slate-900 border-2 border-emerald-500/60 p-3.5 sm:p-4 rounded-2xl shadow-xl relative overflow-hidden group hover:border-emerald-400 transition">
           <div class="flex items-center justify-between text-slate-400 mb-2">
-            <span class="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider text-brand-400">💎 NET PROFIT</span>
-            <i data-lucide="sparkles" class="w-4 h-4 text-brand-400"></i>
+            <span class="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-emerald-400">💎 NET PROFIT</span>
+            <i data-lucide="sparkles" class="w-4 h-4 text-emerald-400"></i>
           </div>
-          <div class="text-lg sm:text-xl font-extrabold text-brand-300 tracking-tight" id="monthly-net-profit">PKR 0.00</div>
-          <p class="text-[10px] text-brand-400/80 mt-1">closing balance</p>
+          <div class="text-xl sm:text-2xl font-black text-emerald-300 tracking-tight" id="monthly-net-profit">PKR 0.00</div>
+          <p class="text-[10px] text-emerald-400/90 font-bold mt-1">closing balance</p>
         </div>
       </div>
 
@@ -596,22 +596,22 @@
       <div class="bg-slate-900/90 border border-slate-800 rounded-2xl shadow-xl overflow-hidden">
         <div class="p-4 sm:p-5 border-b border-slate-800 flex items-center justify-between">
           <h3 class="font-bold text-base text-white flex items-center gap-2">
-            <i data-lucide="list-ordered" class="w-4 h-4 text-brand-400"></i> Daily Register Breakdown
+            <i data-lucide="list-ordered" class="w-4 h-4 text-emerald-400"></i> Daily Register Breakdown
           </h3>
           <span class="text-xs text-slate-400" id="monthlyDaysCount">0 days recorded</span>
         </div>
 
         <div class="overflow-x-auto">
           <table class="w-full text-left text-xs">
-            <thead class="bg-slate-800/60 text-slate-400 uppercase tracking-wider border-b border-slate-800 text-[11px]">
+            <thead class="bg-slate-800/80 text-slate-400 border-b border-slate-700/60">
               <tr>
                 <th class="p-3.5 font-bold">Date</th>
-                <th class="p-3.5 text-right font-bold text-emerald-400">Cash (Sales)</th>
-                <th class="p-3.5 text-right font-bold text-sky-400">Bank (Receipts)</th>
+                <th class="p-3.5 text-right font-bold text-emerald-400">Cash In</th>
+                <th class="p-3.5 text-right font-bold text-sky-400">Bank In</th>
                 <th class="p-3.5 text-right font-bold text-purple-400">Udhaar Ret.</th>
-                <th class="p-3.5 text-right font-bold text-white">Total Day In</th>
-                <th class="p-3.5 text-right font-bold text-rose-400">Expense Cash</th>
-                <th class="p-3.5 text-right font-bold text-brand-300">Net Balance</th>
+                <th class="p-3.5 text-right font-bold text-white">Gross Total</th>
+                <th class="p-3.5 text-right font-bold text-rose-400">Expenses</th>
+                <th class="p-3.5 text-right font-bold text-emerald-300">Net Balance</th>
                 <th class="p-3.5 text-center font-bold">Action</th>
               </tr>
             </thead>
@@ -1407,11 +1407,11 @@
     </div>
     <div class="flex items-center space-x-4">
       <span class="text-slate-400">Net Day Closing:</span>
-      <span id="footerNetSettlement" class="text-sm font-black text-brand-300 tracking-tight">PKR 0.00</span>
+      <span id="footerNetSettlement" class="text-sm font-black text-emerald-300 tracking-tight">PKR 0.00</span>
     </div>
   </footer>
 
   <!-- Frontend Logic -->
-  <script src="/static/app.js?v=20260827_05"></script>
+  <script src="/static/app.js?v=20260827_06"></script>
 </body>
 </html>

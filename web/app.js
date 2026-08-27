@@ -928,7 +928,7 @@ async function loadMonthlyClosing(monthStr) {
         const netAmt = data.net_profit || 0;
         if (netEl) {
             netEl.textContent = formatMoney(netAmt);
-            netEl.className = `text-lg sm:text-xl font-extrabold tracking-tight ${netAmt >= 0 ? "text-brand-300" : "text-rose-400"}`;
+            netEl.className = `text-xl sm:text-2xl font-black tracking-tight ${netAmt >= 0 ? "text-emerald-300" : "text-rose-400"}`;
         }
 
         // Day-by-Day Register Rows
@@ -943,14 +943,14 @@ async function loadMonthlyClosing(monthStr) {
         let rowsHtml = "";
         days.forEach(d => {
             rowsHtml += `
-              <tr class="hover:bg-slate-800/40 transition">
+              <tr class="hover:bg-slate-800/40 transition border-b border-slate-800/60">
                 <td class="p-3.5 font-bold text-white">${d.date}</td>
                 <td class="p-3.5 text-right font-medium text-emerald-400">${d.cash_sales ? formatMoney(d.cash_sales) : "-"}</td>
                 <td class="p-3.5 text-right font-medium text-sky-400">${d.bank_slips ? formatMoney(d.bank_slips) : "-"}</td>
                 <td class="p-3.5 text-right font-medium text-purple-400">${d.udhaar_returned ? formatMoney(d.udhaar_returned) : "-"}</td>
                 <td class="p-3.5 text-right font-bold text-white">${formatMoney(d.total_in)}</td>
                 <td class="p-3.5 text-right font-medium text-rose-400">${d.expense ? formatMoney(d.expense) : "-"}</td>
-                <td class="p-3.5 text-right font-extrabold ${d.net_balance >= 0 ? "text-brand-300" : "text-rose-400"}">${d.net_balance >= 0 ? "+" : ""}${formatMoney(d.net_balance)}</td>
+                <td class="p-3.5 text-right font-extrabold ${d.net_balance >= 0 ? "text-emerald-300" : "text-rose-400"}">${d.net_balance >= 0 ? "+" : ""}${formatMoney(d.net_balance)}</td>
                 <td class="p-3.5 text-center"><button onclick="viewDateFromHistory('${d.date}')" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700 transition">View Day</button></td>
               </tr>
             `;
@@ -960,14 +960,14 @@ async function loadMonthlyClosing(monthStr) {
         // Footer Total Row
         if (tfoot) {
             tfoot.innerHTML = `
-              <tr>
+              <tr class="border-t-2 border-slate-700 bg-slate-800/60 font-bold">
                 <td class="p-3.5 text-white">MONTH TOTAL</td>
                 <td class="p-3.5 text-right text-emerald-400">${formatMoney(data.tot_cash_sales)}</td>
                 <td class="p-3.5 text-right text-sky-400">${formatMoney(data.tot_bank_slips)}</td>
                 <td class="p-3.5 text-right text-purple-400">${formatMoney(data.tot_udhaar_returned)}</td>
                 <td class="p-3.5 text-right text-white font-extrabold">${formatMoney(data.gross_revenue)}</td>
                 <td class="p-3.5 text-right text-rose-400">${formatMoney(data.tot_expense)}</td>
-                <td class="p-3.5 text-right font-black ${netAmt >= 0 ? "text-brand-300" : "text-rose-400"}">${formatMoney(netAmt)}</td>
+                <td class="p-3.5 text-right font-black ${netAmt >= 0 ? "text-emerald-300" : "text-rose-400"}">${formatMoney(netAmt)}</td>
                 <td></td>
               </tr>
             `;
@@ -1782,9 +1782,7 @@ async function loadHistory() {
                 <td class="p-3.5 font-bold text-white">${c.date}</td>
                 <td class="p-3.5 text-right text-emerald-400">${formatMoney(cash)}</td>
                 <td class="p-3.5 text-right text-sky-400">${formatMoney(bank)}</td>
-                <td class="p-3.5 text-right font-semibold text-white">${formatMoney(totSales)}</td>
-                <td class="p-3.5 text-right text-rose-400">${formatMoney(exp)}</td>
-                <td class="p-3.5 text-right font-extrabold ${net >= 0 ? "text-brand-400" : "text-rose-400"}">${formatMoney(net)}</td>
+                <td class="p-3.5 text-right font-extrabold ${net >= 0 ? "text-emerald-300" : "text-rose-400"}">${net >= 0 ? "+" : ""}${formatMoney(net)}</td>
                 <td class="p-3.5 text-center">
                   <button onclick="viewDateFromHistory('${c.date}')" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 px-2.5 py-1 rounded-lg border border-slate-700 transition">
                     View
