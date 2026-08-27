@@ -138,6 +138,20 @@ public struct DailyClosingView: View {
             .navigationTitle("🎱 Daily Closing")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        DatabaseManager.shared.syncWithCloud { success, msg in
+                            loadData()
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Text("Sync")
+                                .font(.system(size: 13, weight: .bold))
+                        }
+                        .foregroundColor(.emeraldGreen)
+                    }
+                }
                 ToolbarItem(placement: .navigationBarTrailing) {
                     Button(action: { BiometricAuth.shared.lockApp() }) {
                         Image(systemName: "lock.fill")

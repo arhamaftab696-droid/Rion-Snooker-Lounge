@@ -81,6 +81,22 @@ public struct KhataView: View {
             }
             .navigationTitle("👥 Customer Khata")
             .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .navigationBarLeading) {
+                    Button(action: {
+                        DatabaseManager.shared.syncWithCloud { success, msg in
+                            loadCustomers()
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "arrow.triangle.2.circlepath")
+                            Text("Sync")
+                                .font(.system(size: 13, weight: .bold))
+                        }
+                        .foregroundColor(.emeraldGreen)
+                    }
+                }
+            }
             .sheet(isPresented: $showPaymentModal) {
                 if let cust = selectedCustomer {
                     KhataPaymentSheet(customer: cust) {

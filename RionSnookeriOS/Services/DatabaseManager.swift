@@ -108,6 +108,142 @@ public class DatabaseManager: ObservableObject {
     }
 
     private func seedInitialData() {
+        var stmt: OpaquePointer?
+        var count = 0
+        if sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM transactions;", -1, &stmt, nil) == SQLITE_OK {
+            if sqlite3_step(stmt) == SQLITE_ROW {
+                count = Int(sqlite3_column_int(stmt, 0))
+            }
+        }
+        sqlite3_finalize(stmt)
+
+        if count == 0 {
+            print("🚀 Seeding all 105 transactions into local SQLite database...")
+        let seedTransactions: [(String, String, String, Double, String, String, String)] = [
+            ("2026-08-01", "Counter Cash Sales", "Counter Cash", 10500.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-01", "Bank Transfer / Slips", "Bank Receipt", 29810.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-01", "Daily Expense", "Daily Expense", 900.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-02", "Counter Cash Sales", "Counter Cash", 14897.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-02", "Bank Transfer / Slips", "Bank Receipt", 23000.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-02", "Daily Expense", "Daily Expense", 900.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-03", "Counter Cash Sales", "Counter Cash", 12399.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-03", "Bank Transfer / Slips", "Bank Receipt", 15625.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-03", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-04", "Counter Cash Sales", "Counter Cash", 7309.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-04", "Bank Transfer / Slips", "Bank Receipt", 23780.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-04", "Daily Expense", "Daily Expense", 900.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-05", "Counter Cash Sales", "Counter Cash", 14400.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-05", "Bank Transfer / Slips", "Bank Receipt", 23104.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-05", "Daily Expense", "Daily Expense", 900.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-06", "Counter Cash Sales", "Counter Cash", 12599.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-06", "Bank Transfer / Slips", "Bank Receipt", 17320.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-06", "Daily Expense", "Daily Expense", 900.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-07", "Counter Cash Sales", "Counter Cash", 15505.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-07", "Bank Transfer / Slips", "Bank Receipt", 14240.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-07", "Daily Expense", "Daily Expense", 900.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-08", "Counter Cash Sales", "Counter Cash", 20466.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-08", "Bank Transfer / Slips", "Bank Receipt", 30125.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-08", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-09", "Counter Cash Sales", "Counter Cash", 14626.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-09", "Bank Transfer / Slips", "Bank Receipt", 30610.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-09", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-10", "Counter Cash Sales", "Counter Cash", 19074.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-10", "Bank Transfer / Slips", "Bank Receipt", 18100.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-10", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-11", "Counter Cash Sales", "Counter Cash", 14824.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-11", "Bank Transfer / Slips", "Bank Receipt", 18420.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-11", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-12", "Counter Cash Sales", "Counter Cash", 15719.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-12", "Bank Transfer / Slips", "Bank Receipt", 10170.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-12", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-13", "Counter Cash Sales", "Counter Cash", 23371.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-13", "Bank Transfer / Slips", "Bank Receipt", 10810.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-13", "Daily Expense", "Daily Expense", 2290.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-14", "Counter Cash Sales", "Counter Cash", 21749.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-14", "Bank Transfer / Slips", "Bank Receipt", 19920.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-14", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-15", "Counter Cash Sales", "Counter Cash", 16041.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-15", "Bank Transfer / Slips", "Bank Receipt", 18910.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-15", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-16", "Counter Cash Sales", "Counter Cash", 13798.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-16", "Bank Transfer / Slips", "Bank Receipt", 14780.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-16", "Daily Expense", "Daily Expense", 1180.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-17", "Counter Cash Sales", "Counter Cash", 12757.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-17", "Bank Transfer / Slips", "Bank Receipt", 16465.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-17", "Daily Expense", "Daily Expense", 900.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-18", "Counter Cash Sales", "Counter Cash", 9728.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-18", "Bank Transfer / Slips", "Bank Receipt", 16820.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-18", "Daily Expense", "Daily Expense", 900.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-19", "Counter Cash Sales", "Counter Cash", 14241.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-19", "Bank Transfer / Slips", "Bank Receipt", 15380.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-19", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-20", "Counter Cash Sales", "Counter Cash", 16259.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-20", "Bank Transfer / Slips", "Bank Receipt", 17240.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-20", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-21", "Counter Cash Sales", "Counter Cash", 15678.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-21", "Bank Transfer / Slips", "Bank Receipt", 19350.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-21", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-22", "Counter Cash Sales", "Counter Cash", 13271.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-22", "Bank Transfer / Slips", "Bank Receipt", 27244.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-22", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-23", "Counter Cash Sales", "Counter Cash", 20125.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-23", "Bank Transfer / Slips", "Bank Receipt", 18350.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-23", "Daily Expense", "Daily Expense", 3150.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-24", "Counter Cash Sales", "Counter Cash", 6453.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-24", "Bank Transfer / Slips", "Bank Receipt", 16050.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-24", "Daily Expense", "Daily Expense", 2200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-25", "Counter Cash Sales", "Counter Cash", 14397.0, "Credit", "Cash", "Manual Cash Sales"),
+            ("2026-08-25", "Bank Transfer / Slips", "Bank Receipt", 16638.0, "Credit", "Bank", "Bank Slips & Online Payments"),
+            ("2026-08-25", "Daily Expense", "Daily Expense", 1200.0, "Expense", "Cash", "Daily Cash Expense"),
+            ("2026-08-26", "Tanveer", "Customer Credit", 540.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Fahad", "Customer Credit", 300.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Faraz", "Customer Credit", 800.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Moez", "Customer Credit", 450.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Cheema", "Customer Credit", 200.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Chatta", "Customer Credit", 5137.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Shareef", "Customer Credit", 1650.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Ijaz", "Customer Credit", 250.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Reyan", "Customer Credit", 700.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Gujjar", "Customer Credit", 518.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Abdulrehman", "Customer Credit", 800.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Hafeez", "Customer Credit", 750.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Shah", "Customer Credit", 350.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Ashil", "Customer Credit", 250.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Shani", "Customer Credit", 300.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Zahir", "Customer Credit", 250.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Ubaid", "Customer Credit", 620.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Asif", "Customer Credit", 200.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Moez", "Customer Credit", 450.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Hamza", "Customer Credit", 950.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Viki", "Customer Credit", 100.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Zain", "Customer Credit", 370.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Raza", "Customer Credit", 150.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Umer", "Customer Credit", 1000.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Yasir", "Customer Credit", 630.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Umair", "Customer Credit", 150.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Jamshaid", "Customer Credit", 700.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Ali Property", "Customer Credit", 900.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Zain Shah", "Customer Credit", 690.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+            ("2026-08-26", "Motu", "Customer Credit", 400.0, "Udhaar", "Credit / Udhaar", "Opening Customer Credit (from Credit list.xlsx)"),
+        ]
+
+        for (d, m, c, amt, tt, pm, nt) in seedTransactions {
+            let q = "INSERT INTO transactions (date, merchant, category, total_amount, tx_type, payment_method, notes) VALUES (?, ?, ?, ?, ?, ?, ?);"
+            var stmt: OpaquePointer?
+            if sqlite3_prepare_v2(db, q, -1, &stmt, nil) == SQLITE_OK {
+                sqlite3_bind_text(stmt, 1, (d as NSString).utf8String, -1, nil)
+                sqlite3_bind_text(stmt, 2, (m as NSString).utf8String, -1, nil)
+                sqlite3_bind_text(stmt, 3, (c as NSString).utf8String, -1, nil)
+                sqlite3_bind_double(stmt, 4, amt)
+                sqlite3_bind_text(stmt, 5, (tt as NSString).utf8String, -1, nil)
+                sqlite3_bind_text(stmt, 6, (pm as NSString).utf8String, -1, nil)
+                sqlite3_bind_text(stmt, 7, (nt as NSString).utf8String, -1, nil)
+                sqlite3_step(stmt)
+            }
+            sqlite3_finalize(stmt)
+        }
+        }
+
         let initialCustomers = [
             "Abdullah", "Adnan", "Ali Raza", "Amir", "Asad",
             "Bilal", "Daniyal", "Farhan", "Hamza", "Hassan",
@@ -119,7 +255,6 @@ public class DatabaseManager: ObservableObject {
 
         for name in initialCustomers {
             let query = "INSERT OR IGNORE INTO customers (name) VALUES (?);"
-            var stmt: OpaquePointer?
             if sqlite3_prepare_v2(db, query, -1, &stmt, nil) == SQLITE_OK {
                 sqlite3_bind_text(stmt, 1, (name as NSString).utf8String, -1, nil)
                 sqlite3_step(stmt)
@@ -127,17 +262,15 @@ public class DatabaseManager: ObservableObject {
             sqlite3_finalize(stmt)
         }
 
-        // Seed initial staff if empty
-        var stmt: OpaquePointer?
-        var count = 0
+        var staffCount = 0
         if sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM staff;", -1, &stmt, nil) == SQLITE_OK {
             if sqlite3_step(stmt) == SQLITE_ROW {
-                count = Int(sqlite3_column_int(stmt, 0))
+                staffCount = Int(sqlite3_column_int(stmt, 0))
             }
         }
         sqlite3_finalize(stmt)
 
-        if count == 0 {
+        if staffCount == 0 {
             let staffSeed = [
                 ("Ali Marker", "Marker", "Daily Shift", 1200.0),
                 ("Zubair Head Marker", "Marker", "Monthly", 35000.0),
