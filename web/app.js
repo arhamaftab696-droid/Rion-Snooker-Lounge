@@ -809,6 +809,8 @@ async function handleFileSelect(files) {
     };
     updateProgress();
 
+    let lastErrMsg = "";
+
     // Fast worker function for each slip
     const processSingleSlip = async (rawFile, index) => {
         let processedFile = rawFile;
@@ -828,7 +830,7 @@ async function handleFileSelect(files) {
 
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 12000);
+            const timeoutId = setTimeout(() => controller.abort(), 60000);
 
             const res = await fetch("/api/upload-slips", {
                 method: "POST",
@@ -841,9 +843,16 @@ async function handleFileSelect(files) {
                 successCount++;
             } else {
                 failCount++;
+                try {
+                    const errData = await res.json();
+                    lastErrMsg = errData.detail || errData.message || `HTTP ${res.status}`;
+                } catch (_) {
+                    lastErrMsg = `Server returned HTTP ${res.status}`;
+                }
             }
         } catch (err) {
             failCount++;
+            lastErrMsg = err.name === "AbortError" ? "Upload timed out (60s)" : err.message;
         } finally {
             completedCount++;
             updateProgress();
@@ -890,14 +899,14 @@ async function handleFileSelect(files) {
 
     if (successCount > 0 && failCount === 0) {
         if (slipType === "Udhaar") {
-            alert(`⚡ Added ${successCount} Udhaar slip(s) in seconds!`);
+            alert(`⚡ Added ${successCount} Udhaar slip(s) successfully!`);
         } else {
-            alert(`⚡ Done! Processed & synced ${successCount} slip(s) in seconds!`);
+            alert(`⚡ Done! Processed & synced ${successCount} slip(s) to cloud!`);
         }
     } else if (successCount > 0 && failCount > 0) {
-        alert(`⚠️ Synced ${successCount} slip(s) successfully (${failCount} failed).`);
+        alert(`⚠️ Synced ${successCount} slip(s) successfully (${failCount} failed: ${lastErrMsg}).`);
     } else {
-        alert("❌ Failed to process slips. Please check connection or retry.");
+        alert(`❌ Upload Notice: ${lastErrMsg || "Please check connection or retry."}`);
     }
 }
 
@@ -928,16 +937,20 @@ async function loadMonthlyClosing(monthStr) {
     try {
         const url = monthStr ? `/api/monthly-closing?month=${encodeURIComponent(monthStr)}` : "/api/monthly-closing";
         const res = await fetch(url);
-        if (!res.ok) throw new Error("Failed to load monthly summary");
+        if (!res.ok) throw new Error(`Failed to load monthly summary (${res.status})`);
         const data = await res.json();
 
-        activeSelectedMonth = data.month || "";
+        activeSelectedMonth = data.month || "2026-08";
 
         const sel = document.getElementById("monthlySelectMonth");
-        if (sel && data.available_months && data.available_months.length > 0) {
-            sel.innerHTML = data.available_months.map(m => {
-                const optDate = new Date(m + "-01");
-                const label = optDate.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+        const months = data.available_months && data.available_months.length > 0 ? data.available_months : [activeSelectedMonth];
+        if (sel) {
+            sel.innerHTML = months.map(m => {
+                const parts = (m || "").split("-");
+                const year = parts[0] || "2026";
+                const monthIdx = parseInt(parts[1] || "8", 10) - 1;
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                const label = `${monthNames[monthIdx] || "Month"} ${year}`;
                 return `<option value="${m}" ${m === activeSelectedMonth ? "selected" : ""}>${label}</option>`;
             }).join("");
         }
