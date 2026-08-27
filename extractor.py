@@ -188,14 +188,14 @@ def extract_transaction_from_image(
             ],
             "generationConfig": {
                 "temperature": 0.1,
-                "maxOutputTokens": 600,
+                "maxOutputTokens": 2048,
                 "response_mime_type": "application/json"
             }
         }
         headers = {"Content-Type": "application/json"}
 
         try:
-            response = requests.post(url, json=payload, headers=headers, timeout=10)
+            response = requests.post(url, json=payload, headers=headers, timeout=15)
             if response.status_code == 200:
                 data = response.json()
                 text_content = ""
@@ -228,8 +228,37 @@ def extract_transaction_from_image(
     raise RuntimeError(last_error or "Failed to extract transaction data from image.")
 
 
+def _normalize_extracted_dict(res: Dict[str, Any]) -> Dict[str, Any]:
+    """Normalize extracted dictionary fields and types."""
+    res["merchant"] = str(res.get("merchant") or "Bank Transfer / Slip")
+    res["date"] = str(res.get("date") or "")
+    try:
+        res["total_amount"] = float(res.get("total_amount") or 0.0)
+    except (ValueError, TypeError):
+        res["total_amount"] = 0.0
+    try:
+        res["gross_amount"] = float(res.get("gross_amount") or res.get("total_amount") or 0.0)
+    except (ValueError, TypeError):
+        res["gross_amount"] = res.get("total_amount", 0.0)
+    try:
+        res["extras_deducted"] = float(res.get("extras_deducted") or 0.0)
+    except (ValueError, TypeError):
+        res["extras_deducted"] = 0.0
+    try:
+        res["tax_amount"] = float(res.get("tax_amount") or 0.0)
+    except (ValueError, TypeError):
+        res["tax_amount"] = 0.0
+    res["currency"] = str(res.get("currency") or "PKR")
+    res["category"] = str(res.get("category") or "Bank Receipt")
+    res["payment_method"] = str(res.get("payment_method") or "Bank")
+    res["notes"] = str(res.get("notes") or "")
+    if not isinstance(res.get("items"), list):
+        res["items"] = []
+    return res
+
+
 def _clean_and_parse_json(raw_text: str) -> Optional[Dict[str, Any]]:
-    """Clean markdown code blocks and extract valid JSON dict."""
+    """Clean markdown code blocks and extract valid JSON dict with regex fallback."""
     if not raw_text:
         return None
 
@@ -245,34 +274,47 @@ def _clean_and_parse_json(raw_text: str) -> Optional[Dict[str, Any]]:
     try:
         res = json.loads(cleaned)
         if isinstance(res, dict):
-            # Normalize fields
-            res["merchant"] = str(res.get("merchant", "Unknown Merchant"))
-            res["date"] = str(res.get("date", ""))
-            try:
-                res["total_amount"] = float(res.get("total_amount", 0.0))
-            except (ValueError, TypeError):
-                res["total_amount"] = 0.0
-            try:
-                res["tax_amount"] = float(res.get("tax_amount", 0.0))
-            except (ValueError, TypeError):
-                res["tax_amount"] = 0.0
-            res["currency"] = str(res.get("currency", "$"))
-            res["category"] = str(res.get("category", "General"))
-            res["payment_method"] = str(res.get("payment_method", "Unknown"))
-            res["notes"] = str(res.get("notes", ""))
-            if not isinstance(res.get("items"), list):
-                res["items"] = []
-            return res
+            return _normalize_extracted_dict(res)
     except json.JSONDecodeError:
-        # Try regex extract
         match = re.search(r"\{.*\}", cleaned, re.DOTALL)
         if match:
             try:
                 res = json.loads(match.group(0))
                 if isinstance(res, dict):
-                    return res
+                    return _normalize_extracted_dict(res)
             except Exception:
                 pass
+
+    # Regex field extraction fallback
+    try:
+        merchant_m = re.search(r'"merchant"\s*:\s*"([^"]+)"', cleaned)
+        total_m = re.search(r'"total_amount"\s*:\s*([0-9.]+)', cleaned) or re.search(r'"gross_amount"\s*:\s*([0-9.]+)', cleaned)
+        date_m = re.search(r'"date"\s*:\s*"([0-9-]+)"', cleaned)
+        notes_m = re.search(r'"notes"\s*:\s*"([^"]+)"', cleaned)
+
+        if total_m or merchant_m:
+            total_val = float(total_m.group(1)) if total_m else 0.0
+            merchant_val = merchant_m.group(1) if merchant_m else "Bank Transfer / Slip"
+            date_val = date_m.group(1) if date_m else ""
+            notes_val = notes_m.group(1) if notes_m else ""
+
+            return {
+                "merchant": merchant_val,
+                "date": date_val,
+                "total_amount": total_val,
+                "gross_amount": total_val,
+                "extras_deducted": 0.0,
+                "extras_reason": "",
+                "currency": "PKR",
+                "tax_amount": 0.0,
+                "category": "Bank Receipt",
+                "payment_method": "Bank",
+                "items": [],
+                "notes": notes_val
+            }
+    except Exception:
+        pass
+
     return None
 
 
