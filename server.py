@@ -748,6 +748,52 @@ async def upload_database_restore(file: UploadFile = File(...)):
     
     return {"success": True, "message": "Database restored successfully!"}
 
+
+class UpdateTxRequest(BaseModel):
+    merchant: Optional[str] = None
+    total_amount: float
+    notes: Optional[str] = None
+
+
+@app.get("/api/receipt-image/{tx_id}")
+def get_receipt_image(tx_id: int):
+    tx = db.get_transaction(tx_id)
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+    img_path = tx.get("image_path")
+    if not img_path or not os.path.exists(img_path):
+        raise HTTPException(status_code=404, detail="No receipt image attached to this transaction")
+    mime = extractor.get_image_mime_type(img_path)
+    return FileResponse(path=img_path, media_type=mime)
+
+
+@app.post("/api/transaction/{tx_id}/update")
+def update_tx_details(tx_id: int, payload: UpdateTxRequest):
+    tx = db.get_transaction(tx_id)
+    if not tx:
+        raise HTTPException(status_code=404, detail="Transaction not found")
+
+    new_merchant = payload.merchant.strip() if payload.merchant else tx.get("merchant", "")
+    new_amount = float(payload.total_amount)
+    new_notes = payload.notes.strip() if payload.notes is not None else tx.get("notes", "")
+
+    success = db.update_transaction(
+        tx_id=tx_id,
+        date=tx.get("date", ""),
+        merchant=new_merchant,
+        category=tx.get("category", ""),
+        total_amount=new_amount,
+        currency=tx.get("currency", "PKR "),
+        tax_amount=float(tx.get("tax_amount", 0.0)),
+        payment_method=tx.get("payment_method", "Cash"),
+        notes=new_notes,
+        tx_type=tx.get("tx_type", "Credit")
+    )
+    if not success:
+        raise HTTPException(status_code=500, detail="Failed to update transaction in database")
+    return {"success": True, "message": f"Updated entry #{tx_id} to PKR {new_amount:,.2f}"}
+
+
 # Static Assets & Index
 @app.get("/", response_class=HTMLResponse)
 @app.head("/", response_class=HTMLResponse)
@@ -759,6 +805,7 @@ def read_root():
     return "<h1>TransactionAI Web Server Running.</h1>"
 
 app.mount("/static", StaticFiles(directory=WEB_DIR), name="static")
+app.mount("/receipt_images", StaticFiles(directory=RECEIPTS_DIR), name="receipt_images")
 
 def main():
     import uvicorn

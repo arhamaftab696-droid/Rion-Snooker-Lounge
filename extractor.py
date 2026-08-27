@@ -19,35 +19,39 @@ import time
 DEFAULT_MODEL = "gemini-3.1-flash-lite-preview"
 MODEL_POOL = ["gemini-3.1-flash-lite-preview", "gemini-3-flash-preview"]
 
-SYSTEM_PROMPT_EXTRACTION = """You are an expert financial receipt and invoice OCR analysis AI.
-Analyze the provided image of a receipt, invoice, bank transfer screenshot, bill, or transaction slip.
-Extract the transaction data into a strictly valid JSON object matching this schema:
+SYSTEM_PROMPT_EXTRACTION = """You are an expert financial receipt and bank transfer OCR AI for Pakistani businesses and snooker lounges.
+Analyze the provided image of a receipt, invoice, bank transfer screenshot, mobile banking app screen (EasyPaisa, JazzCash, SadaPay, NayaPay, Raast, HBL, Meezan, Bank Alfalah, UBL, MCB, Allied Bank, Faisal Bank, etc.), paper slip, or handwritten transaction.
 
+CRITICAL INSTRUCTIONS FOR AMOUNT EXTRACTION:
+1. In mobile banking apps (EasyPaisa, JazzCash, SadaPay, Raast, NayaPay, HBL, Meezan, etc.):
+   - The primary transaction amount is the largest prominent number on the screen (e.g. 'Rs. 5,000', 'PKR 12,500.00', '5000', 'Amount: 3,500', 'Money Sent: 1,000', 'Transaction Amount').
+   - NEVER return total_amount as 0.00 if there is any monetary digit or currency number visible in the image!
+   - Extract the full number without comma (e.g. 5000.0 from 'Rs. 5,000').
+2. If fees or extra charges are explicitly deducted, set extras_deducted (float), and total_amount = gross_amount - extras_deducted.
+
+Extract the transaction data into a strictly valid JSON object matching this schema:
 {
-  "merchant": "Name of the business / store / sender / vendor",
-  "date": "YYYY-MM-DD format (if year is missing, assume current year)",
-  "gross_amount": 0.00, // Total gross amount before any deductions/fees (float)
-  "extras_deducted": 0.00, // Any extra charges, fees, discounts, or cuts deducted (float, 0.0 if none)
-  "extras_reason": "Reason for deduction (e.g. Service Charges, Bank Transfer Fee, Discount, Marker Cut)",
-  "total_amount": 0.00, // Final net amount after deducting extras (gross_amount - extras_deducted)
-  "currency": "PKR", // e.g. PKR, Rs, $, USD, EUR, GBP, etc.
-  "tax_amount": 0.00, // float number, 0.0 if not found
-  "category": "Bank Receipt", // Choose from: Bank Receipt, Counter Cash, Staff & Marker Salary, Customer Credit, Utilities, Cafe / Canteen, Maintenance & Repairs, Entertainment, Other
-  "payment_method": "Bank", // e.g. Bank, Cash, Online, Credit Card, Unknown
+  "merchant": "Sender Name / Receiver Name / Bank Name / Customer Name",
+  "date": "YYYY-MM-DD format (if missing, use current date)",
+  "gross_amount": 0.00,
+  "extras_deducted": 0.00,
+  "extras_reason": "e.g. Bank Fee, Service Charges, Discount, Marker Cut (or null)",
+  "total_amount": 0.00,
+  "currency": "PKR",
+  "tax_amount": 0.00,
+  "category": "Bank Receipt",
+  "payment_method": "Bank",
   "items": [
     {
-      "name": "Item name or description",
+      "name": "Description of transfer or items",
       "qty": 1,
       "price": 0.00
     }
   ],
-  "notes": "Any extra notes like invoice number, sender account, or transaction reference"
+  "notes": "Transaction ID, Sender/Receiver info, Bank name or reference"
 }
 
-Important:
-- Return ONLY the JSON object. Do not include markdown preamble.
-- If total amount cannot be definitively found, estimate from line items or provide the most prominent numeric amount.
-- Ensure total_amount, gross_amount, and extras_deducted are numeric floats, not strings.
+Important: Return ONLY the JSON object.
 """
 
 

@@ -465,17 +465,26 @@ function renderDayBook(txs) {
 
         const reasonText = t.merchant || t.notes || t.category;
         const isSettled = (t.notes || "").includes("[PAID");
+        const hasImg = Boolean(t.image_path);
+
+        let slipBtn = hasImg
+          ? `<button onclick="openSlipViewerModal(${t.id}, '${escapeHtml(t.merchant)}', ${t.total_amount}, '${escapeHtml(t.notes || '')}', true)" class="inline-flex items-center gap-1 bg-sky-500/20 hover:bg-sky-500/30 text-sky-300 border border-sky-500/40 text-[10px] font-bold px-2 py-1 rounded-lg transition shadow-sm" title="View Uploaded Slip Photo"><i data-lucide="image" class="w-3 h-3 text-sky-400"></i> Slip</button>`
+          : `<button onclick="openSlipViewerModal(${t.id}, '${escapeHtml(t.merchant)}', ${t.total_amount}, '${escapeHtml(t.notes || '')}', false)" class="inline-flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-bold px-2 py-1 rounded-lg border border-slate-700 transition" title="Edit Entry Details"><i data-lucide="edit-2" class="w-3 h-3 text-slate-400"></i> Edit</button>`;
 
         let actionHtml = `
-          <button onclick="deleteTx(${t.id})" class="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-800 transition" title="Delete Entry">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-          </button>
+          <div class="flex items-center justify-center gap-1.5">
+            ${slipBtn}
+            <button onclick="deleteTx(${t.id})" class="text-slate-500 hover:text-rose-400 p-1 rounded-lg hover:bg-slate-800 transition" title="Delete Entry">
+              <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
         `;
 
         if (isUdhaar) {
             if (!isSettled) {
                 actionHtml = `
-                  <div class="flex items-center justify-center gap-1">
+                  <div class="flex items-center justify-center gap-1.5">
+                    ${slipBtn}
                     <button onclick="settleUdhaar(${t.id}, '${escapeHtml(t.merchant)}')" class="bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow flex items-center gap-1 transition" title="Customer Returned Money Today">
                       Receive
                     </button>
@@ -485,7 +494,12 @@ function renderDayBook(txs) {
                   </div>
                 `;
             } else {
-                actionHtml = `<span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">✓ Paid</span>`;
+                actionHtml = `
+                  <div class="flex items-center justify-center gap-1.5">
+                    ${slipBtn}
+                    <span class="text-[10px] font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded-full">✓ Paid</span>
+                  </div>
+                `;
             }
         }
 
@@ -907,6 +921,76 @@ async function handleFileSelect(files) {
         alert(`⚠️ Synced ${successCount} slip(s) successfully (${failCount} failed: ${lastErrMsg}).`);
     } else {
         alert(`❌ Upload Notice: ${lastErrMsg || "Please check connection or retry."}`);
+    }
+}
+
+// =============================================================================
+// SLIP VIEWER & AMOUNT EDITOR MODAL
+// =============================================================================
+let activeEditingTxId = null;
+
+function openSlipViewerModal(id, merchant, amount, notes, hasImage) {
+    activeEditingTxId = id;
+    const m = document.getElementById("slipViewerModal");
+    if (!m) return;
+    m.classList.remove("hidden");
+
+    setElemText("slipModalTitle", merchant || `Entry #${id}`);
+    setElemText("slipModalSubtitle", `Transaction #${id} • ${hasImage ? "Slip Photo Attached" : "Manual Entry"}`);
+
+    const img = document.getElementById("slipModalImg");
+    const noImg = document.getElementById("slipModalNoImg");
+    if (hasImage) {
+        if (img) {
+            img.src = `/api/receipt-image/${id}?t=${Date.now()}`;
+            img.classList.remove("hidden");
+        }
+        if (noImg) noImg.classList.add("hidden");
+    } else {
+        if (img) img.classList.add("hidden");
+        if (noImg) noImg.classList.remove("hidden");
+    }
+
+    const merInp = document.getElementById("slipEditMerchant");
+    const amtInp = document.getElementById("slipEditAmount");
+    const nInp = document.getElementById("slipEditNotes");
+    if (merInp) merInp.value = merchant || "";
+    if (amtInp) amtInp.value = amount || 0;
+    if (nInp) nInp.value = notes || "";
+    if (window.lucide) lucide.createIcons();
+}
+
+function closeSlipViewerModal() {
+    const m = document.getElementById("slipViewerModal");
+    if (m) m.classList.add("hidden");
+    activeEditingTxId = null;
+}
+
+async function saveSlipEdit() {
+    if (!activeEditingTxId) return;
+    const merchant = document.getElementById("slipEditMerchant")?.value.trim() || "";
+    const amount = parseFloat(document.getElementById("slipEditAmount")?.value) || 0;
+    const notes = document.getElementById("slipEditNotes")?.value.trim() || "";
+
+    const btn = document.getElementById("slipSaveBtn");
+    if (btn) btn.disabled = true;
+
+    try {
+        const res = await fetch(`/api/transaction/${activeEditingTxId}/update`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ merchant, total_amount: amount, notes })
+        });
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.detail || "Failed to update entry");
+        }
+        closeSlipViewerModal();
+        await refreshDayView();
+    } catch (err) {
+        alert("Error updating entry: " + err.message);
+    } finally {
+        if (btn) btn.disabled = false;
     }
 }
 

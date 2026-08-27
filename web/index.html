@@ -1400,6 +1400,68 @@
     </div>
   </div>
 
+  <!-- SLIP VIEWER & AMOUNT EDITOR MODAL -->
+  <div id="slipViewerModal" class="fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-3 sm:p-4 hidden">
+    <div class="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/60">
+        <div class="flex items-center gap-2">
+          <div class="w-8 h-8 rounded-xl bg-sky-500/20 text-sky-400 flex items-center justify-center">
+            <i data-lucide="image" class="w-4 h-4"></i>
+          </div>
+          <div>
+            <h4 class="font-bold text-white text-sm" id="slipModalTitle">Receipt / Slip Preview</h4>
+            <p class="text-[11px] text-slate-400" id="slipModalSubtitle">Transaction Details</p>
+          </div>
+        </div>
+        <button onclick="closeSlipViewerModal()" class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-700 transition">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-4 flex-1">
+        <!-- Image Container -->
+        <div class="bg-black/60 rounded-2xl border border-slate-800 p-2 flex items-center justify-center min-h-[220px] max-h-[380px] overflow-hidden relative">
+          <img id="slipModalImg" src="" alt="Slip Photo" class="max-h-[360px] w-auto object-contain rounded-xl shadow transition duration-300">
+          <div id="slipModalNoImg" class="hidden text-slate-500 text-xs text-center py-12">
+            <i data-lucide="image-off" class="w-8 h-8 mx-auto mb-2 opacity-50"></i>
+            No image attached to this entry
+          </div>
+        </div>
+
+        <!-- Amount & Details Form -->
+        <div class="bg-slate-800/60 border border-slate-700/60 p-3.5 rounded-2xl space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-slate-300">✏️ Correct / Update Amount</span>
+            <span class="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">Instant Sync</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 mb-1">Title / Sender / Customer</label>
+              <input type="text" id="slipEditMerchant" class="w-full bg-slate-900 border border-slate-700 text-white font-bold text-xs rounded-xl p-2 focus:outline-none focus:border-brand-500">
+            </div>
+            <div>
+              <label class="block text-[10px] font-semibold text-slate-400 mb-1">Total Amount (PKR)</label>
+              <input type="number" step="0.01" id="slipEditAmount" class="w-full bg-slate-900 border border-emerald-500/60 text-emerald-300 font-black text-sm rounded-xl p-2 focus:outline-none focus:border-emerald-400">
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] font-semibold text-slate-400 mb-1">Notes / Transaction Ref</label>
+            <input type="text" id="slipEditNotes" class="w-full bg-slate-900 border border-slate-700 text-slate-200 text-xs rounded-xl p-2 focus:outline-none focus:border-brand-500">
+          </div>
+        </div>
+      </div>
+
+      <div class="p-3.5 border-t border-slate-800 bg-slate-800/40 flex justify-between items-center">
+        <button onclick="closeSlipViewerModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold px-4 py-2 rounded-xl transition">Close</button>
+        <button onclick="saveSlipEdit()" id="slipSaveBtn" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-5 py-2 rounded-xl transition shadow flex items-center gap-1.5">
+          <i data-lucide="check" class="w-3.5 h-3.5"></i> Save & Update
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Sticky Bottom Summary Footer (Desktop Only) -->
   <footer class="hidden md:flex fixed bottom-0 left-0 right-0 z-30 bg-slate-900/95 backdrop-blur-md border-t border-slate-800 px-4 py-2 items-center justify-between text-xs shadow-2xl">
     <div class="flex items-center space-x-2 text-slate-400">
@@ -1415,6 +1477,6 @@
   </footer>
 
   <!-- Frontend Logic -->
-  <script src="/static/app.js?v=20260827_12"></script>
+  <script src="/static/app.js?v=20260827_13"></script>
 </body>
 </html>
