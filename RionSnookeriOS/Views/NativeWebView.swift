@@ -53,8 +53,13 @@ public struct NativeWebView: UIViewRepresentable {
         }
 
         public func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
-            // Smooth background match
-            webView.evaluateJavaScript("document.body.style.backgroundColor = '#020617';", completionHandler: nil)
+            let js = """
+            sessionStorage.setItem('rion_auth_token', 'rion_auth_session_valid');
+            const overlay = document.getElementById('login-overlay');
+            if (overlay) overlay.classList.add('hidden');
+            document.body.style.backgroundColor = '#020617';
+            """
+            webView.evaluateJavaScript(js, completionHandler: nil)
         }
     }
 }

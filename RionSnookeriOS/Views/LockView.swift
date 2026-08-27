@@ -114,7 +114,11 @@ public struct LockView: View {
             showError = false
 
             if enteredPIN.count == 4 {
-                if auth.verifyPIN(enteredPIN) {
+                let pinToTest = enteredPIN
+                if auth.verifyPIN(pinToTest) {
+                    withAnimation {
+                        auth.isUnlocked = true
+                    }
                     enteredPIN = ""
                 } else {
                     showError = true
